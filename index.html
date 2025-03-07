@@ -73,8 +73,9 @@
             justify-content: space-between;
             margin: 20px 0;
             flex-wrap: wrap;
+            align-items: center;
         }
-        .button, select {
+        .button, select, input[type="text"] {
             padding: 10px;
             background: #3498db;
             color: #fff;
@@ -82,12 +83,16 @@
             border-radius: 5px;
             cursor: pointer;
             text-align: center;
-            text-decoration: none;
             width: 200px;
             margin: 5px;
         }
-        .button:hover, select:hover {
+        .button:hover, select:hover, input[type="text"]:hover {
             background: #2980b9;
+        }
+        input[type="text"] {
+            background: #fff;
+            color: #333;
+            border: 1px solid #ddd;
         }
         .update-time {
             text-align: center;
@@ -121,6 +126,7 @@
             <select id="district-select">
                 <option value="中国">全国</option>
             </select>
+            <input type="text" id="city-search" placeholder="输入城市名称搜索">
             <select id="parking-select">
                 <option value="">选择停车场</option>
             </select>
@@ -137,10 +143,10 @@
             zoom: 4,
             center: [104.195397, 35.86166], // 中国地理中心
             resizeEnable: true,
-            mapStyle: 'amap://styles/normal',
+            mapStyle: 'amap://styles/normal', // 确保街道和地标可见
             features: ['bg', 'road', 'building', 'point'],
-            viewMode: '3D',
-            pitch: 40
+            viewMode: '2D', // 切换为2D视图以清晰显示边界
+            showLabel: true // 显示地名标签
         });
 
         // 添加地图控件
@@ -229,7 +235,6 @@
             if (adcode === '中国') {
                 map.setZoomAndCenter(4, [104.195397, 35.86166]);
                 clearDistrict();
-                loadPOIs('停车场', map.getCenter());
                 while (districtSelect.options.length > 1) districtSelect.remove(1);
                 Object.keys(provinces).forEach(code => {
                     let opt = document.createElement('option');
@@ -246,37 +251,59 @@
                     subdistrict: 0
                 });
                 district.search(adcode, function(status, result) {
-                    if (status === 'complete') {
+                    if (status === 'complete' && result.districtList && result.districtList.length > 0) {
                         clearDistrict();
-                        let bounds = result.districtList[0].boundaries;
+                        let districtData = result.districtList[0];
+                        let bounds = districtData.boundaries;
                         let polygons = [];
                         if (bounds) {
                             bounds.forEach(bound => {
                                 let polygon = new AMap.Polygon({
                                     path: bound,
                                     fillColor: '#80d8ff',
-                                    fillOpacity: 0.3,
+                                    fillOpacity: 0.4,
                                     strokeColor: '#0091ea',
-                                    strokeWeight: 2
+                                    strokeWeight: 3
                                 });
                                 polygons.push(polygon);
                                 map.add(polygon);
                             });
                             map.setFitView(polygons);
+                        } else {
+                            map.setCenter(districtData.center);
+                            map.setZoom(10);
                         }
 
                         // 加载城市选项
                         while (districtSelect.options.length > 1) districtSelect.remove(1);
-                        let cities = provinces[adcode].cities;
+                        let cities = provinces[adcode].cities || {};
                         Object.keys(cities).forEach(cityCode => {
                             let opt = document.createElement('option');
                             opt.value = cityCode;
                             opt.textContent = cities[cityCode];
                             districtSelect.appendChild(opt);
                         });
-                        loadPOIs('停车场', result.districtList[0].center);
                     } else {
                         console.error('行政区划查询失败:', result);
+                        alert('无法加载该地区，请稍后重试');
+                    }
+                });
+            });
+        });
+
+        // 城市搜索栏
+        const citySearch = document.getElementById('city-search');
+        AMap.plugin('AMap.AutoComplete', function() {
+            let autoComplete = new AMap.AutoComplete({
+                city: '全国'
+            });
+            citySearch.addEventListener('input', (e) => {
+                autoComplete.search(e.target.value, function(status, result) {
+                    if (status === 'complete' && result.tips && result.tips.length > 0) {
+                        let tip = result.tips[0];
+                        map.setCenter(tip.location);
+                        map.setZoom(12);
+                        clearDistrict();
                     }
                 });
             });
@@ -287,30 +314,13 @@
             map.getAllOverlays('polygon').forEach(polygon => map.remove(polygon));
         }
 
-        // 加载POI
-        function loadPOIs(keyword, center) {
-            AMap.plugin('AMap.PlaceSearch', function() {
-                let placeSearch = new AMap.PlaceSearch({
-                    pageSize: 20,
-                    pageIndex: 1,
-                    city: '全国',
-                    map: map,
-                    autoFitView: false // 避免干扰手动选择
-                });
-                placeSearch.searchNearBy(keyword, center, 5000, function(status, result) {
-                    if (status === 'complete' && result.poiList) {
-                        console.log('POI加载:', result.poiList.pois);
-                    }
-                });
-            });
-        }
-
         // 停车场选择
         parkingSelect.addEventListener('change', (e) => {
             const id = parseInt(e.target.value);
             selectedParking = parkingLots.find(lot => lot.id === id) || null;
             if (selectedParking) {
                 map.setCenter(selectedParking.lnglat);
+                map.setZoom(15);
                 showParkingInfo(selectedParking);
             }
         });
@@ -334,7 +344,7 @@
                         title: '您的位置'
                     });
                     map.setCenter(userPosition);
-                    loadPOIs('停车场', userPosition);
+                    map.setZoom(15);
                     updateParkingStatus();
                 } else {
                     alert('定位失败: ' + result.message);
