@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification: google7217b3ac0ba5fa61.html">
+    <meta name="google-site-verification" content="google7217b3ac0ba5fa61.html">
     <title>智泊云 - 智能停车场优化系统</title>
-    <!-- 高德地图JS API，使用您提供的密钥 -->
+    <!-- 高德地图JS API，使用您的密钥 -->
     <script src="https://webapi.amap.com/maps?v=2.0&key=2a3543776c048b0253b10252fa8c3356"></script>
     <style>
         body {
@@ -16,7 +16,7 @@
             color: #333;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -26,6 +26,7 @@
         h1 {
             text-align: center;
             color: #2c3e50;
+            margin-bottom: 20px;
         }
         .status-box {
             display: flex;
@@ -37,7 +38,11 @@
             padding: 15px;
             background: #ecf0f1;
             border-radius: 8px;
-            width: 30%;
+            width: 25%;
+            transition: transform 0.2s;
+        }
+        .status-item:hover {
+            transform: scale(1.05);
         }
         .status-item h3 {
             margin: 0;
@@ -49,23 +54,37 @@
             font-weight: bold;
         }
         #map {
-            height: 400px;
+            height: 500px;
             margin-top: 20px;
             border-radius: 8px;
         }
-        .button {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
+        #panel {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .button, select {
             padding: 10px;
             background: #3498db;
             color: #fff;
-            text-align: center;
-            text-decoration: none;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            width: 200px;
         }
-        .button:hover {
+        .button:hover, select:hover {
             background: #2980b9;
         }
         .update-time {
@@ -91,37 +110,54 @@
                 <h3>占用率</h3>
                 <p id="occupancy-rate">0%</p>
             </div>
+            <div class="status-item">
+                <h3>交通状况</h3>
+                <p id="traffic-status">未知</p>
+            </div>
+        </div>
+        <div class="controls">
+            <select id="parking-select">
+                <option value="">选择停车场</option>
+            </select>
+            <a href="#" class="button" id="navigate-btn">导航至选中车位</a>
         </div>
         <div id="map"></div>
-        <a href="#" class="button" id="navigate-btn">导航至最近车位</a>
+        <div id="panel"></div>
         <p class="update-time">最后更新: <span id="last-update">加载中...</span></p>
     </div>
 
     <script>
         // 初始化高德地图
         let map = new AMap.Map('map', {
-            zoom: 15, // 缩放级别
-            center: [116.397428, 39.90923], // 默认中心点（北京天安门）
-            resizeEnable: true
+            zoom: 15,
+            center: [116.397428, 39.90923], // 默认北京天安门
+            resizeEnable: true,
+            mapStyle: 'amap://styles/normal', // 默认样式，支持街道显示
+            features: ['bg', 'road', 'building', 'point'], // 启用背景、道路、建筑和兴趣点
+            viewMode: '3D', // 3D视图，显示建筑立体效果
+            pitch: 50 // 倾斜角度，增强3D效果
         });
 
         // 添加地图控件
-        map.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+        map.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.Traffic'], function() {
             map.addControl(new AMap.ToolBar()); // 工具条
             map.addControl(new AMap.Scale());   // 比例尺
+            let trafficLayer = new AMap.Traffic({ autoRefresh: true }); // 实时交通图层
+            map.add(trafficLayer);
         });
 
-        // 模拟停车场数据（实际应从后端API获取）
+        // 模拟停车场数据
         const parkingLots = [
             { id: 1, name: "停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
             { id: 2, name: "停车场B", lnglat: [116.407428, 39.91923], spaces: 40, occupied: 25 },
             { id: 3, name: "停车场C", lnglat: [116.387428, 39.89923], spaces: 30, occupied: 10 }
         ];
 
-        let userPosition = null; // 用户当前位置
-        let nearestParking = null; // 最近停车场
+        let userPosition = null;
+        let selectedParking = null;
 
-        // 添加停车场标记
+        // 添加停车场标记并填充下拉菜单
+        const select = document.getElementById('parking-select');
         parkingLots.forEach(lot => {
             let marker = new AMap.Marker({
                 position: lot.lnglat,
@@ -130,15 +166,29 @@
                 label: { content: `${lot.name} (${lot.spaces - lot.occupied}空位)`, offset: new AMap.Pixel(10, -10) }
             });
             marker.on('click', () => showParkingInfo(lot));
+            let option = document.createElement('option');
+            option.value = lot.id;
+            option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
+            select.appendChild(option);
+        });
+
+        // 下拉菜单选择事件
+        select.addEventListener('change', (e) => {
+            const id = parseInt(e.target.value);
+            selectedParking = parkingLots.find(lot => lot.id === id) || null;
+            if (selectedParking) {
+                map.setCenter(selectedParking.lnglat);
+                showParkingInfo(selectedParking);
+            }
         });
 
         // 获取用户位置
         AMap.plugin('AMap.Geolocation', function() {
             let geolocation = new AMap.Geolocation({
-                enableHighAccuracy: true, // 高精度
-                timeout: 10000,           // 超时10秒
+                enableHighAccuracy: true,
+                timeout: 10000,
                 buttonOffset: new AMap.Pixel(10, 20),
-                zoomToAccuracy: true      // 定位成功后调整视野
+                zoomToAccuracy: true
             });
             map.addControl(geolocation);
             geolocation.getCurrentPosition(function(status, result) {
@@ -150,7 +200,6 @@
                         icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
                         title: '您的位置'
                     });
-                    findNearestParking();
                     updateParkingStatus();
                 } else {
                     alert('定位失败: ' + result.message);
@@ -158,23 +207,7 @@
             });
         });
 
-        // 计算最近停车场
-        function findNearestParking() {
-            if (!userPosition) return;
-            let minDistance = Infinity;
-            parkingLots.forEach(lot => {
-                let distance = AMap.GeometryUtil.distance(userPosition, lot.lnglat);
-                if (distance < minDistance && (lot.spaces - lot.occupied) > 0) {
-                    minDistance = distance;
-                    nearestParking = lot;
-                }
-            });
-            if (nearestParking) {
-                map.setCenter(nearestParking.lnglat);
-            }
-        }
-
-        // 更新停车状态
+        // 更新停车状态和交通状况
         function updateParkingStatus() {
             let totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
             let totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
@@ -182,8 +215,12 @@
             let occupancyRate = (totalOccupied / totalSpaces * 100).toFixed(1);
 
             document.getElementById('available-spaces').textContent = available;
-            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5); // 模拟预测需求
+            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
+
+            // 模拟交通状况（实际可从API获取）
+            const trafficStatus = available > 10 ? '畅通' : '拥堵';
+            document.getElementById('traffic-status').textContent = trafficStatus;
 
             let now = new Date();
             document.getElementById('last-update').textContent = now.toLocaleString('zh-CN');
@@ -192,7 +229,7 @@
         // 显示停车场信息
         function showParkingInfo(lot) {
             let infoWindow = new AMap.InfoWindow({
-                content: `<h4>${lot.name}</h4><p>可用车位: ${lot.spaces - lot.occupied}</p><p>总车位: ${lot.spaces}</p>`,
+                content: `<h4>${lot.name}</h4><p>可用车位: ${lot.spaces - lot.occupied}</p><p>总车位: ${lot.spaces}</p><p>经纬度: ${lot.lnglat}</p>`,
                 offset: new AMap.Pixel(0, -30)
             });
             infoWindow.open(map, lot.lnglat);
@@ -205,19 +242,25 @@
                 alert('请先获取您的位置！');
                 return;
             }
-            if (!nearestParking || (nearestParking.spaces - nearestParking.occupied) <= 0) {
-                alert('当前无可用车位，请稍后再试。');
+            if (!selectedParking) {
+                alert('请从下拉菜单选择一个停车场！');
+                return;
+            }
+            if (selectedParking.spaces - selectedParking.occupied <= 0) {
+                alert('所选停车场无可用车位，请选择其他停车场。');
                 return;
             }
 
             AMap.plugin('AMap.Driving', function() {
                 let driving = new AMap.Driving({
                     map: map,
-                    panel: "panel" // 如果需要显示详细路线，可添加<div id="panel"></div>
+                    panel: 'panel', // 显示详细路线
+                    policy: AMap.DrivingPolicy.LEAST_TIME // 最短时间策略
                 });
-                driving.search(userPosition, nearestParking.lnglat, function(status, result) {
+                driving.search(userPosition, selectedParking.lnglat, function(status, result) {
                     if (status === 'complete') {
-                        alert(`导航已规划，从当前位置到${nearestParking.name}，请按路线行驶！`);
+                        document.getElementById('panel').style.display = 'block';
+                        alert(`导航已规划，从当前位置到${selectedParking.name}，请查看路线详情！`);
                     } else {
                         alert('导航规划失败: ' + result);
                     }
