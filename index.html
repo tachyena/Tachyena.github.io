@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google-site-verification" content="google7217b3ac0ba5fa61.html">
     <title>智泊云 - 智能停车场优化系统</title>
     <!-- 高德地图JS API，使用您的密钥 -->
@@ -28,45 +28,12 @@
             color: #2c3e50;
             margin-bottom: 20px;
         }
-        .status-box {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .status-item {
-            text-align: center;
-            padding: 15px;
-            background: #ecf0f1;
-            border-radius: 8px;
-            width: 20%;
-            transition: transform 0.2s;
-        }
-        .status-item:hover {
-            transform: scale(1.05);
-        }
-        .status-item h3 {
-            margin: 0;
-            color: #2980b9;
-        }
-        .status-item p {
-            margin: 5px 0 0;
-            font-size: 20px;
-            font-weight: bold;
-        }
         #map {
             height: 600px;
+            width: 100%;
             margin-top: 20px;
             border-radius: 8px;
-        }
-        #panel {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            display: none;
+            background: #ddd; /* 若地图加载失败，显示灰色背景 */
         }
         .controls {
             display: flex;
@@ -75,24 +42,22 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        .button, select, input[type="text"] {
+        select, input[type="text"], .button {
             padding: 10px;
-            background: #3498db;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
             width: 200px;
             margin: 5px;
-        }
-        .button:hover, select:hover, input[type="text"]:hover {
-            background: #2980b9;
-        }
-        input[type="text"] {
-            background: #fff;
-            color: #333;
+            border-radius: 5px;
             border: 1px solid #ddd;
+        }
+        .button {
+            background: #3498db;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background: #2980b9;
         }
         .update-time {
             text-align: center;
@@ -104,24 +69,6 @@
 <body>
     <div class="container">
         <h1>智泊云 - 智能停车场优化系统</h1>
-        <div class="status-box">
-            <div class="status-item">
-                <h3>可用车位</h3>
-                <p id="available-spaces">0</p>
-            </div>
-            <div class="status-item">
-                <h3>预测需求</h3>
-                <p id="predicted-demand">0</p>
-            </div>
-            <div class="status-item">
-                <h3>占用率</h3>
-                <p id="occupancy-rate">0%</p>
-            </div>
-            <div class="status-item">
-                <h3>交通状况</h3>
-                <p id="traffic-status">未知</p>
-            </div>
-        </div>
         <div class="controls">
             <select id="district-select">
                 <option value="中国">全国</option>
@@ -133,57 +80,10 @@
             <a href="#" class="button" id="navigate-btn">导航至选中车位</a>
         </div>
         <div id="map"></div>
-        <div id="panel"></div>
         <p class="update-time">最后更新: <span id="last-update">加载中...</span></p>
     </div>
 
     <script>
-        // 初始化高德地图
-        let map = new AMap.Map('map', {
-            zoom: 4,
-            center: [104.195397, 35.86166], // 中国地理中心
-            resizeEnable: true,
-            mapStyle: 'amap://styles/normal', // 确保街道和地标可见
-            features: ['bg', 'road', 'building', 'point'],
-            viewMode: '2D', // 切换为2D视图以清晰显示边界
-            showLabel: true // 显示地名标签
-        });
-
-        // 添加地图控件
-        map.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.Traffic'], function() {
-            map.addControl(new AMap.ToolBar());
-            map.addControl(new AMap.Scale());
-            let trafficLayer = new AMap.Traffic({ autoRefresh: true });
-            map.add(trafficLayer);
-        });
-
-        // 中国23个省及其部分城市
-        const provinces = {
-            "11": { name: "北京市", cities: { "1101": "北京市" } },
-            "12": { name: "天津市", cities: { "1201": "天津市" } },
-            "13": { name: "河北省", cities: { "1301": "石家庄市", "1302": "唐山市", "1303": "秦皇岛市" } },
-            "14": { name: "山西省", cities: { "1401": "太原市", "1402": "大同市", "1404": "阳泉市" } },
-            "15": { name: "内蒙古自治区", cities: { "1501": "呼和浩特市", "1502": "包头市", "1503": "乌海市" } },
-            "21": { name: "辽宁省", cities: { "2101": "沈阳市", "2102": "大连市", "2103": "鞍山市" } },
-            "22": { name: "吉林省", cities: { "2201": "长春市", "2202": "吉林市", "2203": "四平市" } },
-            "23": { name: "黑龙江省", cities: { "2301": "哈尔滨市", "2302": "齐齐哈尔市", "2303": "鸡西市" } },
-            "31": { name: "上海市", cities: { "3101": "上海市" } },
-            "32": { name: "江苏省", cities: { "3201": "南京市", "3202": "无锡市", "3203": "徐州市" } },
-            "33": { name: "浙江省", cities: { "3301": "杭州市", "3302": "宁波市", "3303": "温州市" } },
-            "34": { name: "安徽省", cities: { "3401": "合肥市", "3402": "芜湖市", "3403": "蚌埠市" } },
-            "35": { name: "福建省", cities: { "3501": "福州市", "3502": "厦门市", "3503": "莆田市" } },
-            "36": { name: "江西省", cities: { "3601": "南昌市", "3602": "景德镇市", "3604": "九江市" } },
-            "37": { name: "山东省", cities: { "3701": "济南市", "3702": "青岛市", "3703": "淄博市" } },
-            "41": { name: "河南省", cities: { "4101": "郑州市", "4102": "开封市", "4103": "洛阳市" } },
-            "42": { name: "湖北省", cities: { "4201": "武汉市", "4202": "黄石市", "4205": "宜昌市" } },
-            "43": { name: "湖南省", cities: { "4301": "长沙市", "4302": "株洲市", "4303": "湘潭市" } },
-            "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市", "4404": "珠海市" } },
-            "45": { name: "广西壮族自治区", cities: { "4501": "南宁市", "4502": "柳州市", "4503": "桂林市" } },
-            "46": { name: "海南省", cities: { "4601": "海口市", "4602": "三亚市" } },
-            "50": { name: "重庆市", cities: { "5001": "重庆市" } },
-            "51": { name: "四川省", cities: { "5101": "成都市", "5103": "自贡市", "5104": "攀枝花市" } }
-        };
-
         // 模拟停车场数据（武汉集中）
         const parkingLots = [
             { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
@@ -191,228 +91,137 @@
             { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 },
             { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 },
             { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20 },
-            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 },
-            { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35 },
-            { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50 },
-            { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15 },
-            { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30 }
+            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 }
         ];
 
+        let map = null;
         let userPosition = null;
         let selectedParking = null;
 
-        // 添加停车场标记和下拉菜单
-        const parkingSelect = document.getElementById('parking-select');
-        parkingLots.forEach(lot => {
-            let marker = new AMap.Marker({
-                position: lot.lnglat,
-                title: lot.name,
-                map: map,
-                label: { content: `${lot.name} (${lot.spaces - lot.occupied}空位)`, offset: new AMap.Pixel(10, -10) }
-            });
-            marker.on('click', () => {
-                selectedParking = lot;
-                showParkingInfo(lot);
-                map.setCenter(lot.lnglat);
-            });
-            let option = document.createElement('option');
-            option.value = lot.id;
-            option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
-            parkingSelect.appendChild(option);
-        });
-
-        // 行政区划选择
-        const districtSelect = document.getElementById('district-select');
-        Object.keys(provinces).forEach(adcode => {
-            let option = document.createElement('option');
-            option.value = adcode;
-            option.textContent = provinces[adcode].name;
-            districtSelect.appendChild(option);
-        });
-
-        districtSelect.addEventListener('change', (e) => {
-            let adcode = e.target.value;
-            if (adcode === '中国') {
-                map.setZoomAndCenter(4, [104.195397, 35.86166]);
-                clearDistrict();
-                while (districtSelect.options.length > 1) districtSelect.remove(1);
-                Object.keys(provinces).forEach(code => {
-                    let opt = document.createElement('option');
-                    opt.value = code;
-                    opt.textContent = provinces[code].name;
-                    districtSelect.appendChild(opt);
+        // 等待DOM加载完成再初始化地图
+        window.onload = function() {
+            try {
+                map = new AMap.Map('map', {
+                    zoom: 4,
+                    center: [104.195397, 35.86166], // 中国地理中心
+                    resizeEnable: true,
+                    mapStyle: 'amap://styles/normal',
+                    features: ['bg', 'road', 'building', 'point'],
+                    viewMode: '2D',
+                    showLabel: true
                 });
-                return;
-            }
 
-            AMap.plugin('AMap.DistrictSearch', function() {
-                let district = new AMap.DistrictSearch({
-                    level: adcode.length === 2 ? 'province' : 'city',
-                    subdistrict: 0
+                // 添加地图控件
+                map.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+                    map.addControl(new AMap.ToolBar());
+                    map.addControl(new AMap.Scale());
                 });
-                district.search(adcode, function(status, result) {
-                    if (status === 'complete' && result.districtList && result.districtList.length > 0) {
-                        clearDistrict();
-                        let districtData = result.districtList[0];
-                        let bounds = districtData.boundaries;
-                        let polygons = [];
-                        if (bounds) {
-                            bounds.forEach(bound => {
-                                let polygon = new AMap.Polygon({
-                                    path: bound,
-                                    fillColor: '#80d8ff',
-                                    fillOpacity: 0.4,
-                                    strokeColor: '#0091ea',
-                                    strokeWeight: 3
-                                });
-                                polygons.push(polygon);
-                                map.add(polygon);
-                            });
-                            map.setFitView(polygons);
-                        } else {
-                            map.setCenter(districtData.center);
-                            map.setZoom(10);
-                        }
 
-                        // 加载城市选项
-                        while (districtSelect.options.length > 1) districtSelect.remove(1);
-                        let cities = provinces[adcode].cities || {};
-                        Object.keys(cities).forEach(cityCode => {
-                            let opt = document.createElement('option');
-                            opt.value = cityCode;
-                            opt.textContent = cities[cityCode];
-                            districtSelect.appendChild(opt);
-                        });
-                    } else {
-                        console.error('行政区划查询失败:', result);
-                        alert('无法加载该地区，请稍后重试');
-                    }
-                });
-            });
-        });
-
-        // 城市搜索栏
-        const citySearch = document.getElementById('city-search');
-        AMap.plugin('AMap.AutoComplete', function() {
-            let autoComplete = new AMap.AutoComplete({
-                city: '全国'
-            });
-            citySearch.addEventListener('input', (e) => {
-                autoComplete.search(e.target.value, function(status, result) {
-                    if (status === 'complete' && result.tips && result.tips.length > 0) {
-                        let tip = result.tips[0];
-                        map.setCenter(tip.location);
-                        map.setZoom(12);
-                        clearDistrict();
-                    }
-                });
-            });
-        });
-
-        // 清除行政区划覆盖物
-        function clearDistrict() {
-            map.getAllOverlays('polygon').forEach(polygon => map.remove(polygon));
-        }
-
-        // 停车场选择
-        parkingSelect.addEventListener('change', (e) => {
-            const id = parseInt(e.target.value);
-            selectedParking = parkingLots.find(lot => lot.id === id) || null;
-            if (selectedParking) {
-                map.setCenter(selectedParking.lnglat);
-                map.setZoom(15);
-                showParkingInfo(selectedParking);
-            }
-        });
-
-        // 获取用户位置
-        AMap.plugin('AMap.Geolocation', function() {
-            let geolocation = new AMap.Geolocation({
-                enableHighAccuracy: true,
-                timeout: 10000,
-                buttonOffset: new AMap.Pixel(10, 20),
-                zoomToAccuracy: true
-            });
-            map.addControl(geolocation);
-            geolocation.getCurrentPosition(function(status, result) {
-                if (status === 'complete') {
-                    userPosition = result.position;
+                // 添加停车场标记和下拉菜单
+                const parkingSelect = document.getElementById('parking-select');
+                parkingLots.forEach(lot => {
                     let marker = new AMap.Marker({
-                        position: userPosition,
+                        position: lot.lnglat,
+                        title: lot.name,
                         map: map,
-                        icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-                        title: '您的位置'
+                        label: { content: `${lot.name} (${lot.spaces - lot.occupied}空位)`, offset: new AMap.Pixel(10, -10) }
                     });
-                    map.setCenter(userPosition);
-                    map.setZoom(15);
-                    updateParkingStatus();
-                } else {
-                    alert('定位失败: ' + result.message);
-                }
-            });
-        });
-
-        // 更新停车状态
-        function updateParkingStatus() {
-            let totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
-            let totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
-            let available = totalSpaces - totalOccupied;
-            let occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
-
-            document.getElementById('available-spaces').textContent = available;
-            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
-            document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
-
-            let now = new Date();
-            document.getElementById('last-update').textContent = now.toLocaleString('zh-CN');
-        }
-
-        // 显示停车场信息
-        function showParkingInfo(lot) {
-            let infoWindow = new AMap.InfoWindow({
-                content: `<h4>${lot.name}</h4><p>可用车位: ${lot.spaces - lot.occupied}</p><p>总车位: ${lot.spaces}</p><p>经纬度: ${lot.lnglat}</p>`,
-                offset: new AMap.Pixel(0, -30)
-            });
-            infoWindow.open(map, lot.lnglat);
-        }
-
-        // 导航功能
-        document.getElementById('navigate-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!userPosition) {
-                alert('请先获取您的位置！');
-                return;
-            }
-            if (!selectedParking) {
-                alert('请从下拉菜单选择一个停车场！');
-                return;
-            }
-            if (selectedParking.spaces - selectedParking.occupied <= 0) {
-                alert('所选停车场无可用车位，请选择其他停车场。');
-                return;
-            }
-
-            AMap.plugin('AMap.Driving', function() {
-                let driving = new AMap.Driving({
-                    map: map,
-                    panel: 'panel',
-                    policy: AMap.DrivingPolicy.LEAST_TIME
+                    marker.on('click', () => {
+                        selectedParking = lot;
+                        map.setCenter(lot.lnglat);
+                        map.setZoom(15);
+                    });
+                    let option = document.createElement('option');
+                    option.value = lot.id;
+                    option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
+                    parkingSelect.appendChild(option);
                 });
-                driving.search(userPosition, selectedParking.lnglat, function(status, result) {
-                    if (status === 'complete') {
-                        document.getElementById('panel').style.display = 'block';
-                        alert(`导航已规划，从当前位置到${selectedParking.name}，请查看路线详情！`);
-                    } else {
-                        alert('导航规划失败: ' + result);
+
+                // 行政区划选择（简化版）
+                const districtSelect = document.getElementById('district-select');
+                const provinces = {
+                    "42": { name: "湖北省", center: [114.305392, 30.593099], zoom: 8 },
+                    "11": { name: "北京市", center: [116.397428, 39.90923], zoom: 10 },
+                    "31": { name: "上海市", center: [121.473701, 31.230416], zoom: 10 }
+                };
+                Object.keys(provinces).forEach(adcode => {
+                    let option = document.createElement('option');
+                    option.value = adcode;
+                    option.textContent = provinces[adcode].name;
+                    districtSelect.appendChild(option);
+                });
+
+                districtSelect.addEventListener('change', (e) => {
+                    let adcode = e.target.value;
+                    if (adcode === '中国') {
+                        map.setZoomAndCenter(4, [104.195397, 35.86166]);
+                    } else if (provinces[adcode]) {
+                        map.setZoomAndCenter(provinces[adcode].zoom, provinces[adcode].center);
                     }
                 });
-            });
-        });
 
-        // 初始化状态并定时更新
-        updateParkingStatus();
-        setInterval(updateParkingStatus, 5000);
+                // 城市搜索
+                AMap.plugin('AMap.AutoComplete', function() {
+                    let autoComplete = new AMap.AutoComplete({ city: '全国' });
+                    document.getElementById('city-search').addEventListener('input', (e) => {
+                        autoComplete.search(e.target.value, function(status, result) {
+                            if (status === 'complete' && result.tips && result.tips.length > 0) {
+                                let tip = result.tips[0];
+                                map.setCenter(tip.location);
+                                map.setZoom(12);
+                            }
+                        });
+                    });
+                });
+
+                // 定位
+                AMap.plugin('AMap.Geolocation', function() {
+                    let geolocation = new AMap.Geolocation({
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        buttonOffset: new AMap.Pixel(10, 20),
+                        zoomToAccuracy: true
+                    });
+                    map.addControl(geolocation);
+                    geolocation.getCurrentPosition(function(status, result) {
+                        if (status === 'complete') {
+                            userPosition = result.position;
+                            let marker = new AMap.Marker({
+                                position: userPosition,
+                                map: map,
+                                icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                                title: '您的位置'
+                            });
+                            map.setCenter(userPosition);
+                            map.setZoom(15);
+                        }
+                    });
+                });
+
+                // 导航
+                document.getElementById('navigate-btn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (!userPosition || !selectedParking) {
+                        alert('请先定位并选择停车场！');
+                        return;
+                    }
+                    AMap.plugin('AMap.Driving', function() {
+                        let driving = new AMap.Driving({ map: map });
+                        driving.search(userPosition, selectedParking.lnglat, function(status, result) {
+                            if (status !== 'complete') {
+                                alert('导航失败: ' + result);
+                            }
+                        });
+                    });
+                });
+
+                // 更新时间
+                document.getElementById('last-update').textContent = new Date().toLocaleString('zh-CN');
+            } catch (error) {
+                console.error('地图加载失败:', error);
+                document.getElementById('map').innerHTML = '地图加载失败，请检查网络或API密钥';
+            }
+        };
     </script>
 </body>
 </html>
