@@ -151,7 +151,7 @@
             map.add(trafficLayer);
         });
 
-        // 中国23个省及其部分城市（手动数据）
+        // 中国23个省及其部分城市
         const provinces = {
             "11": { name: "北京市", cities: { "1101": "北京市" } },
             "12": { name: "天津市", cities: { "1201": "天津市" } },
@@ -183,9 +183,8 @@
             { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
             { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25 },
             { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 },
-            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 }, // 武汉中心
-            { id: 5, name: "武汉停车场E",ව
-
+            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 },
+            { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20 },
             { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 },
             { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35 },
             { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50 },
@@ -205,7 +204,11 @@
                 map: map,
                 label: { content: `${lot.name} (${lot.spaces - lot.occupied}空位)`, offset: new AMap.Pixel(10, -10) }
             });
-            marker.on('click', () => showParkingInfo(lot));
+            marker.on('click', () => {
+                selectedParking = lot;
+                showParkingInfo(lot);
+                map.setCenter(lot.lnglat);
+            });
             let option = document.createElement('option');
             option.value = lot.id;
             option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
@@ -247,18 +250,20 @@
                         clearDistrict();
                         let bounds = result.districtList[0].boundaries;
                         let polygons = [];
-                        bounds.forEach(bound => {
-                            let polygon = new AMap.Polygon({
-                                path: bound,
-                                fillColor: '#80d8ff',
-                                fillOpacity: 0.3,
-                                strokeColor: '#0091ea',
-                                strokeWeight: 2
+                        if (bounds) {
+                            bounds.forEach(bound => {
+                                let polygon = new AMap.Polygon({
+                                    path: bound,
+                                    fillColor: '#80d8ff',
+                                    fillOpacity: 0.3,
+                                    strokeColor: '#0091ea',
+                                    strokeWeight: 2
+                                });
+                                polygons.push(polygon);
+                                map.add(polygon);
                             });
-                            polygons.push(polygon);
-                            map.add(polygon);
-                        });
-                        map.setFitView(polygons);
+                            map.setFitView(polygons);
+                        }
 
                         // 加载城市选项
                         while (districtSelect.options.length > 1) districtSelect.remove(1);
@@ -269,6 +274,9 @@
                             opt.textContent = cities[cityCode];
                             districtSelect.appendChild(opt);
                         });
+                        loadPOIs('停车场', result.districtList[0].center);
+                    } else {
+                        console.error('行政区划查询失败:', result);
                     }
                 });
             });
@@ -287,7 +295,7 @@
                     pageIndex: 1,
                     city: '全国',
                     map: map,
-                    autoFitView: true
+                    autoFitView: false // 避免干扰手动选择
                 });
                 placeSearch.searchNearBy(keyword, center, 5000, function(status, result) {
                     if (status === 'complete' && result.poiList) {
@@ -339,12 +347,12 @@
             let totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
             let totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
             let available = totalSpaces - totalOccupied;
-            let occupancyRate = (totalOccupied / totalSpaces * 100).toFixed(1);
+            let occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
 
             document.getElementById('available-spaces').textContent = available;
             document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = available > 10 ? '畅通' : '拥堵';
+            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
 
             let now = new Date();
             document.getElementById('last-update').textContent = now.toLocaleString('zh-CN');
@@ -392,7 +400,8 @@
             });
         });
 
-        // 定时更新数据
+        // 初始化状态并定时更新
+        updateParkingStatus();
         setInterval(updateParkingStatus, 5000);
     </script>
 </body>
