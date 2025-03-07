@@ -134,11 +134,11 @@
     <script>
         // 初始化高德地图
         let map = new AMap.Map('map', {
-            zoom: 4,
-            center: [104.195397, 35.86166], // 中国地理中心
+            zoom: 4, // 全国视图缩放级别
+            center: [104.195397, 35.86166], // 中国地理中心（大致）
             resizeEnable: true,
             mapStyle: 'amap://styles/normal',
-            features: ['bg', 'road', 'building', 'point'],
+            features: ['bg', 'road', 'building', 'point'], // 启用所有图层
             viewMode: '3D',
             pitch: 40
         });
@@ -151,45 +151,11 @@
             map.add(trafficLayer);
         });
 
-        // 中国23个省及其部分城市
-        const provinces = {
-            "11": { name: "北京市", cities: { "1101": "北京市" } },
-            "12": { name: "天津市", cities: { "1201": "天津市" } },
-            "13": { name: "河北省", cities: { "1301": "石家庄市", "1302": "唐山市", "1303": "秦皇岛市" } },
-            "14": { name: "山西省", cities: { "1401": "太原市", "1402": "大同市", "1404": "阳泉市" } },
-            "15": { name: "内蒙古自治区", cities: { "1501": "呼和浩特市", "1502": "包头市", "1503": "乌海市" } },
-            "21": { name: "辽宁省", cities: { "2101": "沈阳市", "2102": "大连市", "2103": "鞍山市" } },
-            "22": { name: "吉林省", cities: { "2201": "长春市", "2202": "吉林市", "2203": "四平市" } },
-            "23": { name: "黑龙江省", cities: { "2301": "哈尔滨市", "2302": "齐齐哈尔市", "2303": "鸡西市" } },
-            "31": { name: "上海市", cities: { "3101": "上海市" } },
-            "32": { name: "江苏省", cities: { "3201": "南京市", "3202": "无锡市", "3203": "徐州市" } },
-            "33": { name: "浙江省", cities: { "3301": "杭州市", "3302": "宁波市", "3303": "温州市" } },
-            "34": { name: "安徽省", cities: { "3401": "合肥市", "3402": "芜湖市", "3403": "蚌埠市" } },
-            "35": { name: "福建省", cities: { "3501": "福州市", "3502": "厦门市", "3503": "莆田市" } },
-            "36": { name: "江西省", cities: { "3601": "南昌市", "3602": "景德镇市", "3604": "九江市" } },
-            "37": { name: "山东省", cities: { "3701": "济南市", "3702": "青岛市", "3703": "淄博市" } },
-            "41": { name: "河南省", cities: { "4101": "郑州市", "4102": "开封市", "4103": "洛阳市" } },
-            "42": { name: "湖北省", cities: { "4201": "武汉市", "4202": "黄石市", "4205": "宜昌市" } },
-            "43": { name: "湖南省", cities: { "4301": "长沙市", "4302": "株洲市", "4303": "湘潭市" } },
-            "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市", "4404": "珠海市" } },
-            "45": { name: "广西壮族自治区", cities: { "4501": "南宁市", "4502": "柳州市", "4503": "桂林市" } },
-            "46": { name: "海南省", cities: { "4601": "海口市", "4602": "三亚市" } },
-            "50": { name: "重庆市", cities: { "5001": "重庆市" } },
-            "51": { name: "四川省", cities: { "5101": "成都市", "5103": "自贡市", "5104": "攀枝花市" } }
-        };
-
-        // 模拟停车场数据（武汉集中）
+        // 模拟停车场数据
         const parkingLots = [
             { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
             { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25 },
-            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 },
-            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 },
-            { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20 },
-            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 },
-            { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35 },
-            { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50 },
-            { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15 },
-            { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30 }
+            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 }
         ];
 
         let userPosition = null;
@@ -204,11 +170,7 @@
                 map: map,
                 label: { content: `${lot.name} (${lot.spaces - lot.occupied}空位)`, offset: new AMap.Pixel(10, -10) }
             });
-            marker.on('click', () => {
-                selectedParking = lot;
-                showParkingInfo(lot);
-                map.setCenter(lot.lnglat);
-            });
+            marker.on('click', () => showParkingInfo(lot));
             let option = document.createElement('option');
             option.value = lot.id;
             option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
@@ -217,66 +179,64 @@
 
         // 行政区划选择
         const districtSelect = document.getElementById('district-select');
-        Object.keys(provinces).forEach(adcode => {
-            let option = document.createElement('option');
-            option.value = adcode;
-            option.textContent = provinces[adcode].name;
-            districtSelect.appendChild(option);
-        });
+        AMap.plugin('AMap.DistrictSearch', function() {
+            let district = new AMap.DistrictSearch({
+                level: 'country',
+                subdistrict: 1, // 返回下一级行政区
+                showbiz: false
+            });
 
-        districtSelect.addEventListener('change', (e) => {
-            let adcode = e.target.value;
-            if (adcode === '中国') {
-                map.setZoomAndCenter(4, [104.195397, 35.86166]);
-                clearDistrict();
-                loadPOIs('停车场', map.getCenter());
-                while (districtSelect.options.length > 1) districtSelect.remove(1);
-                Object.keys(provinces).forEach(code => {
-                    let opt = document.createElement('option');
-                    opt.value = code;
-                    opt.textContent = provinces[code].name;
-                    districtSelect.appendChild(opt);
-                });
-                return;
-            }
+            // 初始化加载省级数据
+            district.search('中国', function(status, result) {
+                if (status === 'complete') {
+                    let provinces = result.districtList[0].districtList;
+                    provinces.forEach(prov => {
+                        let option = document.createElement('option');
+                        option.value = prov.adcode;
+                        option.textContent = prov.name;
+                        districtSelect.appendChild(option);
+                    });
+                }
+            });
 
-            AMap.plugin('AMap.DistrictSearch', function() {
-                let district = new AMap.DistrictSearch({
-                    level: adcode.length === 2 ? 'province' : 'city',
-                    subdistrict: 0
-                });
+            // 监听行政区划选择
+            districtSelect.addEventListener('change', (e) => {
+                let adcode = e.target.value;
+                if (adcode === '中国') {
+                    map.setZoomAndCenter(4, [104.195397, 35.86166]);
+                    clearDistrict();
+                    loadPOIs('停车场', map.getCenter());
+                    return;
+                }
+                district.setLevel(adcode.length === 2 ? 'province' : adcode.length === 4 ? 'city' : 'district');
                 district.search(adcode, function(status, result) {
                     if (status === 'complete') {
                         clearDistrict();
                         let bounds = result.districtList[0].boundaries;
                         let polygons = [];
-                        if (bounds) {
-                            bounds.forEach(bound => {
-                                let polygon = new AMap.Polygon({
-                                    path: bound,
-                                    fillColor: '#80d8ff',
-                                    fillOpacity: 0.3,
-                                    strokeColor: '#0091ea',
-                                    strokeWeight: 2
-                                });
-                                polygons.push(polygon);
-                                map.add(polygon);
+                        bounds.forEach(bound => {
+                            let polygon = new AMap.Polygon({
+                                path: bound,
+                                fillColor: '#80d8ff',
+                                fillOpacity: 0.3,
+                                strokeColor: '#0091ea',
+                                strokeWeight: 2
                             });
-                            map.setFitView(polygons);
-                        }
-
-                        // 加载城市选项
-                        while (districtSelect.options.length > 1) districtSelect.remove(1);
-                        let cities = provinces[adcode].cities;
-                        Object.keys(cities).forEach(cityCode => {
-                            let opt = document.createElement('option');
-                            opt.value = cityCode;
-                            opt.textContent = cities[cityCode];
-                            districtSelect.appendChild(opt);
+                            polygons.push(polygon);
+                            map.add(polygon);
                         });
+                        map.setFitView(polygons);
                         loadPOIs('停车场', result.districtList[0].center);
-                    } else {
-                        console.error('行政区划查询失败:', result);
+
+                        // 加载下一级行政区
+                        let subDistricts = result.districtList[0].districtList || [];
+                        while (districtSelect.options.length > 1) districtSelect.remove(1);
+                        subDistricts.forEach(sub => {
+                            let option = document.createElement('option');
+                            option.value = sub.adcode;
+                            option.textContent = sub.name;
+                            districtSelect.appendChild(option);
+                        });
                     }
                 });
             });
@@ -287,7 +247,7 @@
             map.getAllOverlays('polygon').forEach(polygon => map.remove(polygon));
         }
 
-        // 加载POI
+        // 加载POI（街道、商铺等）
         function loadPOIs(keyword, center) {
             AMap.plugin('AMap.PlaceSearch', function() {
                 let placeSearch = new AMap.PlaceSearch({
@@ -295,7 +255,7 @@
                     pageIndex: 1,
                     city: '全国',
                     map: map,
-                    autoFitView: false // 避免干扰手动选择
+                    autoFitView: true
                 });
                 placeSearch.searchNearBy(keyword, center, 5000, function(status, result) {
                     if (status === 'complete' && result.poiList) {
@@ -347,12 +307,12 @@
             let totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
             let totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
             let available = totalSpaces - totalOccupied;
-            let occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
+            let occupancyRate = (totalOccupied / totalSpaces * 100).toFixed(1);
 
             document.getElementById('available-spaces').textContent = available;
             document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
+            document.getElementById('traffic-status').textContent = available > 10 ? '畅通' : '拥堵';
 
             let now = new Date();
             document.getElementById('last-update').textContent = now.toLocaleString('zh-CN');
@@ -400,8 +360,7 @@
             });
         });
 
-        // 初始化状态并定时更新
-        updateParkingStatus();
+        // 定时更新数据
         setInterval(updateParkingStatus, 5000);
     </script>
 </body>
