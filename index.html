@@ -16,7 +16,7 @@
             color: #333;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -38,7 +38,7 @@
             padding: 15px;
             background: #ecf0f1;
             border-radius: 8px;
-            width: 25%;
+            width: 20%;
             transition: transform 0.2s;
         }
         .status-item:hover {
@@ -50,11 +50,11 @@
         }
         .status-item p {
             margin: 5px 0 0;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
         }
         #map {
-            height: 500px;
+            height: 600px;
             margin-top: 20px;
             border-radius: 8px;
         }
@@ -72,6 +72,7 @@
             display: flex;
             justify-content: space-between;
             margin: 20px 0;
+            flex-wrap: wrap;
         }
         .button, select {
             padding: 10px;
@@ -83,6 +84,7 @@
             text-align: center;
             text-decoration: none;
             width: 200px;
+            margin: 5px;
         }
         .button:hover, select:hover {
             background: #2980b9;
@@ -116,6 +118,9 @@
             </div>
         </div>
         <div class="controls">
+            <select id="district-select">
+                <option value="中国">全国</option>
+            </select>
             <select id="parking-select">
                 <option value="">选择停车场</option>
             </select>
@@ -129,35 +134,35 @@
     <script>
         // 初始化高德地图
         let map = new AMap.Map('map', {
-            zoom: 15,
-            center: [116.397428, 39.90923], // 默认北京天安门
+            zoom: 4, // 全国视图缩放级别
+            center: [104.195397, 35.86166], // 中国地理中心（大致）
             resizeEnable: true,
-            mapStyle: 'amap://styles/normal', // 默认样式，支持街道显示
-            features: ['bg', 'road', 'building', 'point'], // 启用背景、道路、建筑和兴趣点
-            viewMode: '3D', // 3D视图，显示建筑立体效果
-            pitch: 50 // 倾斜角度，增强3D效果
+            mapStyle: 'amap://styles/normal',
+            features: ['bg', 'road', 'building', 'point'], // 启用所有图层
+            viewMode: '3D',
+            pitch: 40
         });
 
         // 添加地图控件
         map.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.Traffic'], function() {
-            map.addControl(new AMap.ToolBar()); // 工具条
-            map.addControl(new AMap.Scale());   // 比例尺
-            let trafficLayer = new AMap.Traffic({ autoRefresh: true }); // 实时交通图层
+            map.addControl(new AMap.ToolBar());
+            map.addControl(new AMap.Scale());
+            let trafficLayer = new AMap.Traffic({ autoRefresh: true });
             map.add(trafficLayer);
         });
 
         // 模拟停车场数据
         const parkingLots = [
-            { id: 1, name: "停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
-            { id: 2, name: "停车场B", lnglat: [116.407428, 39.91923], spaces: 40, occupied: 25 },
-            { id: 3, name: "停车场C", lnglat: [116.387428, 39.89923], spaces: 30, occupied: 10 }
+            { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
+            { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25 },
+            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 }
         ];
 
         let userPosition = null;
         let selectedParking = null;
 
-        // 添加停车场标记并填充下拉菜单
-        const select = document.getElementById('parking-select');
+        // 添加停车场标记和下拉菜单
+        const parkingSelect = document.getElementById('parking-select');
         parkingLots.forEach(lot => {
             let marker = new AMap.Marker({
                 position: lot.lnglat,
@@ -169,11 +174,99 @@
             let option = document.createElement('option');
             option.value = lot.id;
             option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
-            select.appendChild(option);
+            parkingSelect.appendChild(option);
         });
 
-        // 下拉菜单选择事件
-        select.addEventListener('change', (e) => {
+        // 行政区划选择
+        const districtSelect = document.getElementById('district-select');
+        AMap.plugin('AMap.DistrictSearch', function() {
+            let district = new AMap.DistrictSearch({
+                level: 'country',
+                subdistrict: 1, // 返回下一级行政区
+                showbiz: false
+            });
+
+            // 初始化加载省级数据
+            district.search('中国', function(status, result) {
+                if (status === 'complete') {
+                    let provinces = result.districtList[0].districtList;
+                    provinces.forEach(prov => {
+                        let option = document.createElement('option');
+                        option.value = prov.adcode;
+                        option.textContent = prov.name;
+                        districtSelect.appendChild(option);
+                    });
+                }
+            });
+
+            // 监听行政区划选择
+            districtSelect.addEventListener('change', (e) => {
+                let adcode = e.target.value;
+                if (adcode === '中国') {
+                    map.setZoomAndCenter(4, [104.195397, 35.86166]);
+                    clearDistrict();
+                    loadPOIs('停车场', map.getCenter());
+                    return;
+                }
+                district.setLevel(adcode.length === 2 ? 'province' : adcode.length === 4 ? 'city' : 'district');
+                district.search(adcode, function(status, result) {
+                    if (status === 'complete') {
+                        clearDistrict();
+                        let bounds = result.districtList[0].boundaries;
+                        let polygons = [];
+                        bounds.forEach(bound => {
+                            let polygon = new AMap.Polygon({
+                                path: bound,
+                                fillColor: '#80d8ff',
+                                fillOpacity: 0.3,
+                                strokeColor: '#0091ea',
+                                strokeWeight: 2
+                            });
+                            polygons.push(polygon);
+                            map.add(polygon);
+                        });
+                        map.setFitView(polygons);
+                        loadPOIs('停车场', result.districtList[0].center);
+
+                        // 加载下一级行政区
+                        let subDistricts = result.districtList[0].districtList || [];
+                        while (districtSelect.options.length > 1) districtSelect.remove(1);
+                        subDistricts.forEach(sub => {
+                            let option = document.createElement('option');
+                            option.value = sub.adcode;
+                            option.textContent = sub.name;
+                            districtSelect.appendChild(option);
+                        });
+                    }
+                });
+            });
+        });
+
+        // 清除行政区划覆盖物
+        function clearDistrict() {
+            map.getAllOverlays('polygon').forEach(polygon => map.remove(polygon));
+        }
+
+        // 加载POI（街道、商铺等）
+        function loadPOIs(keyword, center) {
+            AMap.plugin('AMap.PlaceSearch', function() {
+                let placeSearch = new AMap.PlaceSearch({
+                    pageSize: 20,
+                    pageIndex: 1,
+                    city: '全国',
+                    map: map,
+                    autoFitView: true
+                });
+                placeSearch.searchNearBy(keyword, center, 5000, function(status, result) {
+                    if (status === 'complete' && result.poiList) {
+                        console.log('POI加载:', result.poiList.pois);
+                    }
+                });
+            });
+        }
+
+        // 停车场选择
+        parkingSelect.addEventListener('change', (e) => {
             const id = parseInt(e.target.value);
             selectedParking = parkingLots.find(lot => lot.id === id) || null;
             if (selectedParking) {
@@ -200,6 +293,8 @@
                         icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
                         title: '您的位置'
                     });
+                    map.setCenter(userPosition);
+                    loadPOIs('停车场', userPosition);
                     updateParkingStatus();
                 } else {
                     alert('定位失败: ' + result.message);
@@ -207,7 +302,7 @@
             });
         });
 
-        // 更新停车状态和交通状况
+        // 更新停车状态
         function updateParkingStatus() {
             let totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
             let totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
@@ -217,10 +312,7 @@
             document.getElementById('available-spaces').textContent = available;
             document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-
-            // 模拟交通状况（实际可从API获取）
-            const trafficStatus = available > 10 ? '畅通' : '拥堵';
-            document.getElementById('traffic-status').textContent = trafficStatus;
+            document.getElementById('traffic-status').textContent = available > 10 ? '畅通' : '拥堵';
 
             let now = new Date();
             document.getElementById('last-update').textContent = now.toLocaleString('zh-CN');
@@ -254,8 +346,8 @@
             AMap.plugin('AMap.Driving', function() {
                 let driving = new AMap.Driving({
                     map: map,
-                    panel: 'panel', // 显示详细路线
-                    policy: AMap.DrivingPolicy.LEAST_TIME // 最短时间策略
+                    panel: 'panel',
+                    policy: AMap.DrivingPolicy.LEAST_TIME
                 });
                 driving.search(userPosition, selectedParking.lnglat, function(status, result) {
                     if (status === 'complete') {
