@@ -5,10 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google-site-verification" content="google7217b3ac0ba5fa61.html">
     <title>智泊云 - 智能停车场优化系统</title>
-    <!-- 高德地图JS API -->
-    <script src="https://webapi.amap.com/maps?v=2.0&key=YOUR_SERVER_SIDE_API_KEY"></script>
+    <!-- 高德地图JS API，使用您的密钥 -->
+    <script src="https://webapi.amap.com/maps?v=2.0&key=2a3543776c048b0253b10252fa8c3356"></script>
     <style>
-        /* 省略样式部分 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 2vw;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            padding: 2vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2vh;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        .status-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 2vh 0;
+            gap: 1vw;
+        }
+        .status-item {
+            text-align: center;
+            padding: 1.5vw;
+            background: #ecf0f1;
+            border-radius: 8px;
+            flex: 1 1 20%;
+            min-width: 100px;
+            transition: transform 0.2s;
+        }
+        .status-item:hover {
+            transform: scale(1.05);
+        }
+        .status-item h3 {
+            margin: 0;
+            color: #2980b9;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+        }
+        .status-item p {
+            margin: 0.5vh 0 0;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            font-weight: bold;
+        }
+        #map {
+            height: 60vh;
+            width: 100%;
+            margin-top: 2vh;
+            border-radius: 8px;
+            background: #ddd;
+        }
+        #panel {
+            max-height: 20vh;
+            overflow-y: auto;
+            margin-top: 1vh;
+            padding: 1vw;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 2vh 0;
+            gap: 1vw;
+        }
+        .button, select, input[type="text"] {
+            padding: 1vw;
+            background: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            width: clamp(100px, 20vw, 200px);
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+        }
+        .button:hover, select:hover, input[type="text"]:hover {
+            background: #2980b9;
+        }
+        input[type="text"] {
+            background: #fff;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .update-time {
+            text-align: center;
+            font-size: clamp(0.7rem, 2vw, 0.875rem);
+            color: #777;
+            margin-top: 1vh;
+        }
+        @media (max-width: 768px) {
+            .status-item {
+                flex: 1 1 45%;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -68,14 +176,45 @@
                 map.add(trafficLayer);
             });
 
+            // 中国23个省及其部分城市
             const provinces = {
                 "11": { name: "北京市", cities: { "1101": "北京市" } },
-                // ... 省略其他省份数据 ...
+                "12": { name: "天津市", cities: { "1201": "天津市" } },
+                "13": { name: "河北省", cities: { "1301": "石家庄市", "1302": "唐山市", "1303": "秦皇岛市" } },
+                "14": { name: "山西省", cities: { "1401": "太原市", "1402": "大同市", "1404": "阳泉市" } },
+                "15": { name: "内蒙古自治区", cities: { "1501": "呼和浩特市", "1502": "包头市", "1503": "乌海市" } },
+                "21": { name: "辽宁省", cities: { "2101": "沈阳市", "2102": "大连市", "2103": "鞍山市" } },
+                "22": { name: "吉林省", cities: { "2201": "长春市", "2202": "吉林市", "2203": "四平市" } },
+                "23": { name: "黑龙江省", cities: { "2301": "哈尔滨市", "2302": "齐齐哈尔市", "2303": "鸡西市" } },
+                "31": { name: "上海市", cities: { "3101": "上海市" } },
+                "32": { name: "江苏省", cities: { "3201": "南京市", "3202": "无锡市", "3203": "徐州市" } },
+                "33": { name: "浙江省", cities: { "3301": "杭州市", "3302": "宁波市", "3303": "温州市" } },
+                "34": { name: "安徽省", cities: { "3401": "合肥市", "3402": "芜湖市", "3403": "蚌埠市" } },
+                "35": { name: "福建省", cities: { "3501": "福州市", "3502": "厦门市", "3503": "莆田市" } },
+                "36": { name: "江西省", cities: { "3601": "南昌市", "3602": "景德镇市", "3604": "九江市" } },
+                "37": { name: "山东省", cities: { "3701": "济南市", "3702": "青岛市", "3703": "淄博市" } },
+                "41": { name: "河南省", cities: { "4101": "郑州市", "4102": "开封市", "4103": "洛阳市" } },
+                "42": { name: "湖北省", cities: { "4201": "武汉市", "4202": "黄石市", "4205": "宜昌市" } },
+                "43": { name: "湖南省", cities: { "4301": "长沙市", "4302": "株洲市", "4303": "湘潭市" } },
+                "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市", "4404": "珠海市" } },
+                "45": { name: "广西壮族自治区", cities: { "4501": "南宁市", "4502": "柳州市", "4503": "桂林市" } },
+                "46": { name: "海南省", cities: { "4601": "海口市", "4602": "三亚市" } },
+                "50": { name: "重庆市", cities: { "5001": "重庆市" } },
+                "51": { name: "四川省", cities: { "5101": "成都市", "5103": "自贡市", "5104": "攀枝花市" } }
             };
 
+            // 模拟停车场数据（武汉集中）
             const parkingLots = [
                 { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
-                // ... 省略其他停车场数据 ...
+                { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25 },
+                { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 },
+                { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 },
+                { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20 },
+                { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 },
+                { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35 },
+                { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50 },
+                { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15 },
+                { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30 }
             ];
 
             let userPosition = null;
@@ -224,7 +363,6 @@
                         map.setZoom(15);
                         updateParkingStatus();
                     } else {
-                        alert('定位失败，请检查网络连接或设备权限。');
                         console.error('定位失败:', result.message);
                     }
                 });
@@ -290,7 +428,7 @@
 
             // 初始化状态并定时更新
             updateParkingStatus();
-            setInterval(updateParkingStatus, 10000); // 调整更新频率为10秒
+            setInterval(updateParkingStatus, 5000);
         };
     </script>
 </body>
