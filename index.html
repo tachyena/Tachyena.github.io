@@ -4,136 +4,193 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>智泊云 - 智能停车场优化系统</title>
-    <!-- 高德地图 JS API，建议通过后端代理加载 -->
+    <!-- 高德地图 JS API（通过后端代理加载） -->
     <script>
-        // 建议将密钥移至后端，通过代理加载，例如：
-        // fetch('/api/amap-key').then(res => res.json()).then(data => loadMapScript(data.key));
-        const AMAP_KEY = '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的密钥
-        const script = document.createElement('script');
-        script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}`;
-        script.async = true;
-        script.onerror = () => alert('地图加载失败，请检查网络或密钥');
-        document.head.appendChild(script);
+        // 动态加载高德地图脚本，密钥通过后端获取（示例使用本地存储模拟）
+        const loadMapScript = async () => {
+            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 替换为真实后端接口
+            const script = document.createElement('script');
+            script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
+            script.async = true;
+            script.onerror = () => document.getElementById('error-modal').style.display = 'block';
+            document.head.appendChild(script);
+            return new Promise(resolve => script.onload = resolve);
+        };
     </script>
+    <!-- 天气 API（示例使用 OpenWeatherMap，可替换为高德天气） -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
+        /* 基础样式 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 2vw;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
             color: #333;
+            overflow-x: hidden;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
             background: #fff;
-            padding: 2vw;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         h1 {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 2vh;
-            font-size: clamp(1.5rem, 4vw, 2rem);
+            color: #1a73e8;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 20px;
         }
+
+        /* 状态栏 */
         .status-box {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            margin: 2vh 0;
-            gap: 1vw;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
         }
         .status-item {
-            text-align: center;
-            padding: 1.5vw;
-            background: #ecf0f1;
+            background: #fff;
+            padding: 15px;
             border-radius: 8px;
-            flex: 1 1 20%;
-            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .status-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .status-item h3 {
-            margin: 0;
-            color: #2980b9;
-            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+            color: #1a73e8;
+            font-size: 1rem;
+            margin-bottom: 5px;
         }
         .status-item p {
-            margin: 0.5vh 0 0;
-            font-size: clamp(1rem, 3vw, 1.5rem);
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
+
+        /* 控制栏 */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        select, input[type="text"], .button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            width: clamp(150px, 20vw, 250px);
+            transition: all 0.3s;
+        }
+        select, .button {
+            background: #1a73e8;
+            color: #fff;
+            cursor: pointer;
+        }
+        select:hover, .button:hover {
+            background: #1557b0;
+        }
+        input[type="text"] {
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+        input[type="text"]:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        /* 地图和面板 */
         #map {
             height: 60vh;
             width: 100%;
-            margin-top: 2vh;
             border-radius: 8px;
-            background: #ddd;
+            background: #e0e0e0;
         }
         #panel {
             max-height: 20vh;
             overflow-y: auto;
-            margin-top: 1vh;
-            padding: 1vw;
+            margin-top: 10px;
+            padding: 10px;
             background: #f9f9f9;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 6px;
             display: none;
         }
-        .controls {
+
+        /* 附加功能 */
+        .filter-box {
             display: flex;
+            gap: 10px;
+            margin: 10px 0;
             flex-wrap: wrap;
-            justify-content: space-between;
-            margin: 2vh 0;
-            gap: 1vw;
         }
-        .button, select, input[type="text"] {
-            padding: 1vw;
-            background: #3498db;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: clamp(100px, 20vw, 200px);
-            font-size: clamp(0.8rem, 2.5vw, 1rem);
-            transition: background 0.3s;
+        .weather-box {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f0fe;
+            border-radius: 6px;
+            font-size: 0.9rem;
         }
-        .button:hover, select:hover {
-            background: #2980b9;
+        .user-box {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
         }
-        input[type="text"] {
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
             background: #fff;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-        .update-time {
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
             text-align: center;
-            font-size: clamp(0.7rem, 2vw, 0.875rem);
-            color: #777;
-            margin-top: 1vh;
         }
         .loading {
-            text-align: center;
-            color: #999;
-            font-style: italic;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
             display: none;
         }
+
+        /* 响应式 */
         @media (max-width: 768px) {
-            .status-item { flex: 1 1 45%; }
-            .controls { flex-direction: column; align-items: center; }
+            .controls, .filter-box { flex-direction: column; align-items: stretch; }
+            .status-box { grid-template-columns: repeat(2, 1fr); }
+            .user-box { position: static; margin: 10px 0; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="user-box">
+            <button class="button" id="login-btn">登录</button>
+            <select id="language-select">
+                <option value="zh-CN">中文</option>
+                <option value="en">English</option>
+            </select>
+        </div>
         <h1>智泊云 - 智能停车场优化系统</h1>
         <div class="status-box">
             <div class="status-item"><h3>可用车位</h3><p id="available-spaces">0</p></div>
@@ -145,15 +202,100 @@
             <select id="district-select"><option value="中国">全国</option></select>
             <input type="text" id="city-search" placeholder="输入城市名称搜索">
             <select id="parking-select"><option value="">选择停车场</option></select>
-            <a href="#" class="button" id="navigate-btn">导航至选中车位</a>
+            <select id="navigate-policy">
+                <option value="LEAST_TIME">最短时间</option>
+                <option value="LEAST_DISTANCE">最短距离</option>
+                <option value="REAL_TRAFFIC">实时交通</option>
+            </select>
+            <button class="button" id="navigate-btn">导航至选中车位</button>
+        </div>
+        <div class="filter-box">
+            <select id="sort-by">
+                <option value="distance">按距离排序</option>
+                <option value="spaces">按空位排序</option>
+                <option value="rating">按评分排序</option>
+            </select>
+            <button class="button" id="recommend-btn">推荐最近停车场</button>
+            <button class="button" id="favorite-btn" disabled>收藏当前停车场</button>
         </div>
         <div id="map"></div>
         <div id="panel"></div>
-        <p class="loading" id="loading">加载中...</p>
+        <div class="weather-box" id="weather-info">天气信息加载中...</div>
         <p class="update-time">最后更新: <span id="last-update">加载中...</span></p>
     </div>
 
+    <!-- 模态框 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <h2>登录</h2>
+            <input type="text" id="username" placeholder="用户名" style="width: 100%; margin: 10px 0;">
+            <input type="password" id="password" placeholder="密码" style="width: 100%; margin: 10px 0;">
+            <button class="button" id="submit-login">登录</button>
+            <button class="button" style="background: #ccc; margin-left: 10px;" onclick="closeModal('login-modal')">取消</button>
+        </div>
+    </div>
+    <div class="modal" id="error-modal">
+        <div class="modal-content">
+            <h2>错误</h2>
+            <p>地图加载失败，请检查网络或稍后重试。</p>
+            <button class="button" onclick="location.reload()">刷新</button>
+        </div>
+    </div>
+    <div class="loading" id="loading">加载中...</div>
+
     <script>
+        // 多语言支持
+        const translations = {
+            'zh-CN': {
+                title: '智泊云 - 智能停车场优化系统',
+                available: '可用车位',
+                demand: '预测需求',
+                occupancy: '占用率',
+                traffic: '交通状况',
+                nationwide: '全国',
+                searchCity: '输入城市名称搜索',
+                selectParking: '选择停车场',
+                navigate: '导航至选中车位',
+                sortByDistance: '按距离排序',
+                sortBySpaces: '按空位排序',
+                sortByRating: '按评分排序',
+                recommend: '推荐最近停车场',
+                favorite: '收藏当前停车场',
+                login: '登录',
+                lastUpdate: '最后更新',
+                weatherLoading: '天气信息加载中...',
+                loginTitle: '登录',
+                username: '用户名',
+                password: '密码',
+                submitLogin: '登录',
+                cancel: '取消'
+            },
+            'en': {
+                title: 'SmartPark - Intelligent Parking System',
+                available: 'Available Spaces',
+                demand: 'Predicted Demand',
+                occupancy: 'Occupancy Rate',
+                traffic: 'Traffic Status',
+                nationwide: 'Nationwide',
+                searchCity: 'Search City Name',
+                selectParking: 'Select Parking Lot',
+                navigate: 'Navigate to Selected Lot',
+                sortByDistance: 'Sort by Distance',
+                sortBySpaces: 'Sort by Spaces',
+                sortByRating: 'Sort by Rating',
+                recommend: 'Recommend Nearest Lot',
+                favorite: 'Favorite Current Lot',
+                login: 'Login',
+                lastUpdate: 'Last Updated',
+                weatherLoading: 'Weather Info Loading...',
+                loginTitle: 'Login',
+                username: 'Username',
+                password: 'Password',
+                submitLogin: 'Login',
+                cancel: 'Cancel'
+            }
+        };
+
         // 数据定义
         const provinces = {
             "11": { name: "北京市", cities: { "1101": "北京市" } },
@@ -182,20 +324,20 @@
         };
 
         const parkingLots = [
-            { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30 },
-            { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25 },
-            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10 },
-            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40 },
-            { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20 },
-            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20 },
-            { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35 },
-            { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50 },
-            { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15 },
-            { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30 }
+            { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30, rating: 4.5, images: [], comments: [] },
+            { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25, rating: 4.2, images: [], comments: [] },
+            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10, rating: 4.8, images: [], comments: [] },
+            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40, rating: 4.0, images: [], comments: [] },
+            { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, images: [], comments: [] },
+            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20, rating: 4.3, images: [], comments: [] },
+            { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35, rating: 4.7, images: [], comments: [] },
+            { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50, rating: 4.1, images: [], comments: [] },
+            { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15, rating: 4.4, images: [], comments: [] },
+            { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30, rating: 4.9, images: [], comments: [] }
         ];
 
         // 全局状态
-        let map, userPosition = null, selectedParking = null, markers = [];
+        let map, userPosition = null, selectedParking = null, markers = [], currentLang = 'zh-CN', user = null;
 
         // 日志工具
         const logger = {
@@ -213,13 +355,46 @@
         };
 
         const calculateDistance = (pos1, pos2) => {
-            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 返回公里数
+            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 公里
         };
+
+        const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
+        const closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        // 更新语言
+        function updateLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            document.title = t.title;
+            document.querySelector('h1').textContent = t.title;
+            document.querySelector('#available-spaces').previousElementSibling.textContent = t.available;
+            document.querySelector('#predicted-demand').previousElementSibling.textContent = t.demand;
+            document.querySelector('#occupancy-rate').previousElementSibling.textContent = t.occupancy;
+            document.querySelector('#traffic-status').previousElementSibling.textContent = t.traffic;
+            document.querySelector('#district-select option[value="中国"]').textContent = t.nationwide;
+            document.querySelector('#city-search').placeholder = t.searchCity;
+            document.querySelector('#parking-select option:first-child').textContent = t.selectParking;
+            document.querySelector('#navigate-btn').textContent = t.navigate;
+            document.querySelector('#sort-by option[value="distance"]').textContent = t.sortByDistance;
+            document.querySelector('#sort-by option[value="spaces"]').textContent = t.sortBySpaces;
+            document.querySelector('#sort-by option[value="rating"]').textContent = t.sortByRating;
+            document.querySelector('#recommend-btn').textContent = t.recommend;
+            document.querySelector('#favorite-btn').textContent = t.favorite;
+            document.querySelector('#login-btn').textContent = t.login;
+            document.querySelector('#last-update').parentElement.firstChild.textContent = t.lastUpdate + ': ';
+            document.querySelector('#weather-info').textContent = t.weatherLoading;
+            document.querySelector('#login-modal h2').textContent = t.loginTitle;
+            document.querySelector('#username').placeholder = t.username;
+            document.querySelector('#password').placeholder = t.password;
+            document.querySelector('#submit-login').textContent = t.submitLogin;
+            document.querySelector('#login-modal button:last-child').textContent = t.cancel;
+        }
 
         // 初始化地图
         async function initMap() {
+            showLoading(true);
             try {
-                document.getElementById('loading').style.display = 'block';
+                await loadMapScript();
                 map = new AMap.Map('map', {
                     zoom: 4,
                     center: [104.195397, 35.86166],
@@ -236,13 +411,12 @@
                 logger.info('地图初始化成功');
             } catch (e) {
                 logger.error('地图初始化失败:', e);
-                alert('地图加载失败，请刷新页面重试');
+                document.getElementById('error-modal').style.display = 'block';
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                showLoading(false);
             }
         }
 
-        // 动态加载插件
         async function loadPlugins(plugins) {
             return new Promise((resolve, reject) => {
                 map.plugin(plugins, () => resolve());
@@ -276,12 +450,12 @@
             });
         }
 
-        // 选择停车场
         function selectParking(lot) {
             selectedParking = lot;
             showParkingInfo(lot);
             map.setCenter(lot.lnglat);
             map.setZoom(15);
+            document.getElementById('favorite-btn').disabled = !user;
             logger.info(`选择了停车场: ${lot.name}`);
         }
 
@@ -316,9 +490,10 @@
                             clearDistrict();
                             drawDistrict(districtData);
                             updateDistrictOptions(adcode);
+                            fetchWeather(districtData.center);
                         } else {
                             logger.error('行政区划查询失败:', result);
-                            alert('行政区划加载失败，请重试');
+                            alert('行政区划加载失败');
                         }
                     });
                 } catch (e) {
@@ -392,6 +567,7 @@
                             map.setCenter(tip.location);
                             map.setZoom(12);
                             clearDistrict();
+                            fetchWeather(tip.location);
                         } else {
                             logger.error('城市搜索失败:', result);
                         }
@@ -426,6 +602,7 @@
                         map.setZoom(15);
                         updateParkingStatus();
                         recommendNearestParking();
+                        fetchWeather(userPosition);
                     } else {
                         logger.error('定位失败:', result.message);
                         alert('定位失败，请手动选择城市或停车场');
@@ -452,21 +629,38 @@
             document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
             document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
-            document.getElementById('last-update').textContent = new Date().toLocaleString('zh-CN');
+            document.getElementById('last-update').textContent = new Date().toLocaleString(currentLang);
 
             updateParkingUI();
         }
 
-        // 更新停车场 UI
         function updateParkingUI() {
             const parkingSelect = document.getElementById('parking-select');
-            parkingSelect.innerHTML = '<option value="">选择停车场</option>';
+            const sortBy = document.getElementById('sort-by').value;
+            let sortedLots = [...parkingLots];
+
+            if (userPosition) {
+                sortedLots = sortedLots.map(lot => ({
+                    ...lot,
+                    distance: calculateDistance(userPosition, lot.lnglat)
+                }));
+            }
+
+            sortedLots.sort((a, b) => {
+                if (sortBy === 'distance' && userPosition) return a.distance - b.distance;
+                if (sortBy === 'spaces') return (b.spaces - b.occupied) - (a.spaces - a.occupied);
+                if (sortBy === 'rating') return b.rating - a.rating;
+                return 0;
+            });
+
+            parkingSelect.innerHTML = `<option value="">${translations[currentLang].selectParking}</option>`;
             markers.forEach((marker, index) => {
-                const lot = parkingLots[index];
+                const lot = sortedLots[index];
                 marker.setLabel({ content: `${lot.name} (${lot.spaces - lot.occupied}空位)` });
+                marker.setPosition(lot.lnglat);
                 const option = document.createElement('option');
                 option.value = lot.id;
-                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
+                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位${userPosition ? `, ${lot.distance.toFixed(2)}km` : ''})`;
                 parkingSelect.appendChild(option);
             });
         }
@@ -478,8 +672,10 @@
                     <h4>${lot.name}</h4>
                     <p>可用车位: ${lot.spaces - lot.occupied}</p>
                     <p>总车位: ${lot.spaces}</p>
+                    <p>评分: ${lot.rating}/5</p>
                     <p>经纬度: ${lot.lnglat}</p>
                     ${userPosition ? `<p>距离: ${calculateDistance(userPosition, lot.lnglat).toFixed(2)} 公里</p>` : ''}
+                    <p>评论: ${lot.comments.length > 0 ? lot.comments.join('<br>') : '暂无评论'}</p>
                 `,
                 offset: new AMap.Pixel(0, -30)
             });
@@ -509,10 +705,11 @@
 
                 try {
                     await loadPlugins(['AMap.Driving']);
+                    const policy = document.getElementById('navigate-policy').value;
                     const driving = new AMap.Driving({
                         map: map,
                         panel: 'panel',
-                        policy: AMap.DrivingPolicy.LEAST_TIME
+                        policy: AMap.DrivingPolicy[policy]
                     });
                     driving.search(userPosition, selectedParking.lnglat, (status, result) => {
                         if (status === 'complete') {
@@ -529,7 +726,68 @@
             });
         }
 
-        // 初始化应用
+        // 用户登录
+        function initUser() {
+            document.getElementById('login-btn').addEventListener('click', () => {
+                document.getElementById('login-modal').style.display = 'flex';
+            });
+
+            document.getElementById('submit-login').addEventListener('click', () => {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+                if (!username || !password) return alert('请填写用户名和密码');
+                user = { username, favorites: JSON.parse(localStorage.getItem('favorites') || '[]') };
+                document.getElementById('login-btn').textContent = `欢迎, ${username}`;
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('favorite-btn').disabled = false;
+                logger.info('用户登录:', username);
+            });
+
+            document.getElementById('favorite-btn').addEventListener('click', () => {
+                if (!selectedParking || !user) return;
+                if (!user.favorites.includes(selectedParking.id)) {
+                    user.favorites.push(selectedParking.id);
+                    localStorage.setItem('favorites', JSON.stringify(user.favorites));
+                    alert(`${selectedParking.name} 已收藏`);
+                } else {
+                    alert('此停车场已收藏');
+                }
+            });
+        }
+
+        // 天气信息
+        async function fetchWeather(lnglat) {
+            const [lng, lat] = lnglat;
+            const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // 替换为您的 OpenWeatherMap API 密钥
+            try {
+                const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=${currentLang}`);
+                const data = response.data;
+                document.getElementById('weather-info').innerHTML = `
+                    天气: ${data.weather[0].description}<br>
+                    温度: ${data.main.temp}°C<br>
+                    湿度: ${data.main.humidity}%
+                `;
+            } catch (e) {
+                logger.error('天气获取失败:', e);
+                document.getElementById('weather-info').textContent = '天气信息暂不可用';
+            }
+        }
+
+        // 排序功能
+        function initSorting() {
+            document.getElementById('sort-by').addEventListener('change', () => updateParkingUI());
+            document.getElementById('recommend-btn').addEventListener('click', recommendNearestParking);
+        }
+
+        // 初始化语言
+        function initLanguage() {
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                updateLanguage(e.target.value);
+            });
+            updateLanguage(currentLang);
+        }
+
+        // 主初始化
         window.onload = async () => {
             await initMap();
             initParkingLots();
@@ -537,6 +795,9 @@
             initCitySearch();
             await initGeolocation();
             initNavigation();
+            initUser();
+            initSorting();
+            initLanguage();
             updateParkingStatus();
             setInterval(updateParkingStatus, 5000);
         };
