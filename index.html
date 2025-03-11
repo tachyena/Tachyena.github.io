@@ -8,7 +8,7 @@
     <script>
         // 动态加载高德地图脚本
         const loadMapScript = async () => {
-            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 替换为真实密钥
+            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的真实高德地图密钥
             const script = document.createElement('script');
             script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
             script.async = true;
@@ -27,27 +27,26 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 20px auto;
-            padding: 20px;
+            padding: 25px;
             background: #fff;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             position: relative;
-            overflow: hidden;
         }
         h1 {
             text-align: center;
             color: #1a73e8;
             font-size: clamp(2rem, 5vw, 3rem);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .status-box {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
-            margin: 20px 0;
+            margin: 25px 0;
         }
         .status-item {
             background: linear-gradient(145deg, #ffffff, #f0f4ff);
@@ -69,15 +68,48 @@
         .status-item p {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #333;
         }
         .controls {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-            margin: 20px 0;
-            align-items: center;
+            margin: 25px 0;
             justify-content: center;
+            align-items: center;
+        }
+        .stacked-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .stacked-btn {
+            padding: 12px 20px;
+            background: linear-gradient(90deg, #1a73e8, #4285f4);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .stacked-btn:hover {
+            background: linear-gradient(90deg, #1557b0, #357abd);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .stacked-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            padding: 10px;
+            z-index: 10;
+            min-width: 200px;
+            animation: slideDown 0.3s ease;
+        }
+        .stacked-menu:hover .stacked-content {
+            display: block;
         }
         select, input[type="text"], .button {
             padding: 12px 20px;
@@ -106,45 +138,19 @@
             box-shadow: 0 0 8px rgba(26, 115, 232, 0.3);
         }
         #map {
-            height: 60vh;
+            height: 65vh;
             width: 100%;
             border-radius: 15px;
             background: #e0e0e0;
-            margin: 20px 0;
+            margin: 25px 0;
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .filter-box {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0;
-            justify-content: center;
-        }
-        #panel {
-            max-height: 20vh;
-            overflow-y: auto;
-            margin-top: 10px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: none;
-        }
-        .weather-box {
-            margin-top: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #e8f0fe, #d1e3ff);
-            border-radius: 10px;
-            font-size: 1rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .user-box {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 25px;
+            right: 25px;
             display: flex;
-            gap: 10px;
+            gap: 15px;
         }
         .modal {
             display: none;
@@ -199,19 +205,14 @@
             color: #666;
             margin-top: 15px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @media (max-width: 768px) {
-            .controls, .filter-box { flex-direction: column; align-items: stretch; }
+            .controls { flex-direction: column; align-items: stretch; }
             .status-box { grid-template-columns: repeat(2, 1fr); }
             .user-box { position: static; margin: 15px 0; justify-content: center; }
-            .status-item p { font-size: 1.5rem; }
+            .stacked-content { position: static; box-shadow: none; }
         }
     </style>
 </head>
@@ -235,25 +236,26 @@
             <select id="district-select"><option value="中国">全国</option></select>
             <input type="text" id="city-search" placeholder="输入城市名称搜索">
             <select id="parking-select"><option value="">选择停车场</option></select>
-            <select id="navigate-policy">
-                <option value="LEAST_TIME">最短时间</option>
-                <option value="LEAST_DISTANCE">最短距离</option>
-                <option value="REAL_TRAFFIC">实时交通</option>
-            </select>
-            <button class="button" id="navigate-btn">导航至选中车位</button>
-        </div>
-        <div class="filter-box">
-            <select id="sort-by">
-                <option value="distance">按距离排序</option>
-                <option value="spaces">按空位排序</option>
-                <option value="rating">按评分排序</option>
-            </select>
-            <button class="button" id="recommend-btn">推荐最近停车场</button>
-            <button class="button" id="favorite-btn" disabled>收藏当前停车场</button>
+            <div class="stacked-menu">
+                <button class="stacked-btn">更多选项</button>
+                <div class="stacked-content">
+                    <select id="sort-by">
+                        <option value="distance">按距离排序</option>
+                        <option value="spaces">按空位排序</option>
+                        <option value="rating">按评分排序</option>
+                    </select>
+                    <select id="navigate-policy">
+                        <option value="LEAST_TIME">最短时间</option>
+                        <option value="LEAST_DISTANCE">最短距离</option>
+                        <option value="REAL_TRAFFIC">实时交通</option>
+                    </select>
+                </div>
+            </div>
+            <button class="button" id="navigate-btn">导航</button>
+            <button class="button" id="recommend-btn">推荐最近</button>
+            <button class="button" id="favorite-btn" disabled>收藏</button>
         </div>
         <div id="map"></div>
-        <div id="panel"></div>
-        <div class="weather-box" id="weather-info">天气信息加载中...</div>
         <p class="update-time">最后更新: <span id="last-update">加载中...</span></p>
     </div>
 
@@ -287,25 +289,17 @@
                 nationwide: '全国',
                 searchCity: '输入城市名称搜索',
                 selectParking: '选择停车场',
-                navigate: '导航至选中车位',
-                recommend: '推荐最近停车场',
-                favorite: '收藏当前停车场',
+                navigate: '导航',
+                recommend: '推荐最近',
+                favorite: '收藏',
                 login: '登录',
                 welcome: '欢迎',
                 lastUpdate: '最后更新',
-                weatherLoading: '天气信息加载中...',
                 loginTitle: '登录',
                 username: '用户名',
                 password: '密码',
                 submitLogin: '登录',
-                cancel: '取消',
-                noPosition: '请先获取您的位置！',
-                noParking: '请从下拉菜单选择一个停车场！',
-                noSpaces: '所选停车场无可用车位，请选择其他停车场。',
-                weather: '天气',
-                temperature: '温度',
-                humidity: '湿度',
-                weatherUnavailable: '天气信息暂不可用'
+                cancel: '取消'
             },
             'en': {
                 title: 'SmartPark - Intelligent Parking System',
@@ -316,25 +310,17 @@
                 nationwide: 'Nationwide',
                 searchCity: 'Search City Name',
                 selectParking: 'Select Parking Lot',
-                navigate: 'Navigate to Selected Lot',
-                recommend: 'Recommend Nearest Lot',
-                favorite: 'Favorite Current Lot',
+                navigate: 'Navigate',
+                recommend: 'Recommend Nearest',
+                favorite: 'Favorite',
                 login: 'Login',
                 welcome: 'Welcome',
                 lastUpdate: 'Last Updated',
-                weatherLoading: 'Weather Info Loading...',
                 loginTitle: 'Login',
                 username: 'Username',
                 password: 'Password',
                 submitLogin: 'Login',
-                cancel: 'Cancel',
-                noPosition: 'Please get your location first!',
-                noParking: 'Please select a parking lot from the dropdown!',
-                noSpaces: 'The selected parking lot has no available spaces, please choose another.',
-                weather: 'Weather',
-                temperature: 'Temperature',
-                humidity: 'Humidity',
-                weatherUnavailable: 'Weather info unavailable'
+                cancel: 'Cancel'
             }
         };
 
@@ -343,18 +329,44 @@
             "11": { name: "北京市", cities: { "1101": "北京市" } },
             "31": { name: "上海市", cities: { "3101": "上海市" } },
             "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市" } },
-            "42": { name: "湖北省", cities: { "4201": "武汉市" } }
+            "42": { name: "湖北省", cities: { "4201": "武汉市" } },
+            "32": { name: "江苏省", cities: { "3201": "南京市" } },
+            "33": { name: "浙江省", cities: { "3301": "杭州市" } },
+            "50": { name: "重庆市", cities: { "5001": "重庆市" } },
+            "51": { name: "四川省", cities: { "5101": "成都市" } },
+            "61": { name: "陕西省", cities: { "6101": "西安市" } }
         };
 
         const parkingLots = [
-            { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30, rating: 4.5, area: [], spacesMarkers: [] },
-            { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25, rating: 4.2, area: [], spacesMarkers: [] },
-            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10, rating: 4.8, area: [], spacesMarkers: [] },
-            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 60, occupied: 40, rating: 4.0, area: [], spacesMarkers: [] }
+            // 武汉市停车场（20个）
+            { id: 1, name: "武汉停车场A", lnglat: [114.305392, 30.593099], spaces: 100, occupied: 60, rating: 4.0, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 2, name: "武汉停车场B", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0015, height: 0.0015, spacesData: [] },
+            { id: 3, name: "武汉停车场C", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20, rating: 4.3, width: 0.0025, height: 0.0025, spacesData: [] },
+            { id: 4, name: "武汉停车场D", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35, rating: 4.7, width: 0.001, height: 0.001, spacesData: [] },
+            { id: 5, name: "武汉停车场E", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50, rating: 4.1, width: 0.003, height: 0.003, spacesData: [] },
+            { id: 6, name: "武汉停车场F", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15, rating: 4.4, width: 0.0012, height: 0.0012, spacesData: [] },
+            { id: 7, name: "武汉停车场G", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30, rating: 4.9, width: 0.0022, height: 0.0022, spacesData: [] },
+            { id: 8, name: "武汉停车场H", lnglat: [114.325000, 30.615000], spaces: 60, occupied: 40, rating: 4.2, width: 0.0028, height: 0.0028, spacesData: [] },
+            { id: 9, name: "武汉停车场I", lnglat: [114.285000, 30.575000], spaces: 40, occupied: 25, rating: 4.5, width: 0.0018, height: 0.0018, spacesData: [] },
+            { id: 10, name: "武汉停车场J", lnglat: [114.330000, 30.620000], spaces: 80, occupied: 50, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
+            { id: 11, name: "武汉停车场K", lnglat: [114.275000, 30.565000], spaces: 90, occupied: 60, rating: 4.6, width: 0.004, height: 0.004, spacesData: [] },
+            { id: 12, name: "武汉停车场L", lnglat: [114.340000, 30.630000], spaces: 30, occupied: 10, rating: 4.1, width: 0.001, height: 0.001, spacesData: [] },
+            { id: 13, name: "武汉停车场M", lnglat: [114.265000, 30.555000], spaces: 70, occupied: 40, rating: 4.4, width: 0.0025, height: 0.0025, spacesData: [] },
+            { id: 14, name: "武汉停车场N", lnglat: [114.350000, 30.640000], spaces: 55, occupied: 30, rating: 4.8, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 15, name: "武汉停车场O", lnglat: [114.255000, 30.545000], spaces: 60, occupied: 35, rating: 4.2, width: 0.003, height: 0.003, spacesData: [] },
+            { id: 16, name: "武汉停车场P", lnglat: [114.360000, 30.650000], spaces: 40, occupied: 20, rating: 4.5, width: 0.0015, height: 0.0015, spacesData: [] },
+            { id: 17, name: "武汉停车场Q", lnglat: [114.245000, 30.535000], spaces: 80, occupied: 50, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
+            { id: 18, name: "武汉停车场R", lnglat: [114.370000, 30.660000], spaces: 50, occupied: 30, rating: 4.6, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 19, name: "武汉停车场S", lnglat: [114.235000, 30.525000], spaces: 90, occupied: 60, rating: 4.1, width: 0.004, height: 0.004, spacesData: [] },
+            { id: 20, name: "武汉停车场T", lnglat: [114.380000, 30.670000], spaces: 60, occupied: 40, rating: 4.4, width: 0.0025, height: 0.0025, spacesData: [] },
+            // 其他城市停车场
+            { id: 21, name: "北京停车场U", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30, rating: 4.5, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 22, name: "上海停车场V", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25, rating: 4.2, width: 0.0015, height: 0.0015, spacesData: [] },
+            { id: 23, name: "广州停车场W", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10, rating: 4.8, width: 0.0025, height: 0.0025, spacesData: [] }
         ];
 
         // 全局状态
-        let map, userPosition = null, selectedParking = null, markers = [], currentLang = 'zh-CN', user = null, parkingAreas = [];
+        let map, userPosition = null, selectedParking = null, markers = [], parkingAreas = [], currentLang = 'zh-CN', user = null;
 
         // 日志工具
         const logger = {
@@ -372,7 +384,7 @@
         };
 
         const calculateDistance = (pos1, pos2) => {
-            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 公里
+            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 返回公里数
         };
 
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
@@ -396,7 +408,6 @@
             document.querySelector('#favorite-btn').textContent = t.favorite;
             document.querySelector('#login-btn').textContent = user ? `${t.welcome}, ${user.username}` : t.login;
             document.querySelector('#last-update').parentElement.firstChild.textContent = `${t.lastUpdate}: `;
-            document.querySelector('#weather-info').textContent = t.weatherLoading;
             document.querySelector('#login-modal h2').textContent = t.loginTitle;
             document.querySelector('#username').placeholder = t.username;
             document.querySelector('#password').placeholder = t.password;
@@ -419,10 +430,9 @@
                     viewMode: '2D',
                     showLabel: true
                 });
-                await loadPlugins(['AMap.ToolBar', 'AMap.Scale', 'AMap.Traffic']);
+                await loadPlugins(['AMap.ToolBar', 'AMap.Scale']);
                 map.addControl(new AMap.ToolBar());
                 map.addControl(new AMap.Scale());
-                map.add(new AMap.Traffic({ autoRefresh: true }));
                 logger.info('地图初始化成功');
             } catch (e) {
                 logger.error('地图初始化失败:', e);
@@ -439,7 +449,7 @@
             }).catch(e => logger.error('插件加载失败:', e));
         }
 
-        // 初始化停车场
+        // 初始化停车场和车位
         function initParkingLots() {
             const parkingSelect = document.getElementById('parking-select');
             parkingLots.forEach(lot => {
@@ -454,10 +464,10 @@
 
                 const [lng, lat] = lot.lnglat;
                 const areaCoords = [
-                    [lng - 0.002, lat - 0.002],
-                    [lng + 0.002, lat - 0.002],
-                    [lng + 0.002, lat + 0.002],
-                    [lng - 0.002, lat + 0.002]
+                    [lng - lot.width / 2, lat - lot.height / 2],
+                    [lng + lot.width / 2, lat - lot.height / 2],
+                    [lng + lot.width / 2, lat + lot.height / 2],
+                    [lng - lot.width / 2, lat + lot.height / 2]
                 ];
                 const area = new AMap.Polygon({
                     path: areaCoords,
@@ -484,54 +494,56 @@
             });
         }
 
+        // 生成停车场内的车位
         function generateParkingSpaces(lot) {
-            lot.spacesMarkers.forEach(marker => map.remove(marker));
-            lot.spacesMarkers = [];
+            lot.spacesData.forEach(space => space.marker && map.remove(space.marker));
+            lot.spacesData = [];
 
             const [lng, lat] = lot.lnglat;
             const gridSize = Math.ceil(Math.sqrt(lot.spaces));
-            const stepLng = 0.0005 / gridSize;
-            const stepLat = 0.0005 / gridSize;
+            const stepLng = lot.width / gridSize;
+            const stepLat = lot.height / gridSize;
 
             for (let i = 0; i < lot.spaces; i++) {
                 const row = Math.floor(i / gridSize);
                 const col = i % gridSize;
-                const pos = [lng - 0.00025 + col * stepLng, lat - 0.00025 + row * stepLat];
-                const isOccupied = i < lot.occupied;
+                const pos = [
+                    lng - lot.width / 2 + stepLng * (col + 0.5) + (Math.random() - 0.5) * stepLng * 0.2,
+                    lat - lot.height / 2 + stepLat * (row + 0.5) + (Math.random() - 0.5) * stepLat * 0.2
+                ];
+                const occupied = i < lot.occupied;
                 const marker = new AMap.Marker({
                     position: pos,
                     map: map,
-                    content: `<div style="width: 12px; height: 12px; border-radius: 50%; background: ${isOccupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
-                    offset: new AMap.Pixel(-6, -6),
+                    content: `<div style="width: 10px; height: 10px; border-radius: 50%; background: ${occupied ? 'yellow' : 'green'};"></div>`,
+                    offset: new AMap.Pixel(-5, -5),
                     visible: false
                 });
-                lot.spacesMarkers.push(marker);
+                lot.spacesData.push({ position: pos, occupied, marker });
             }
         }
 
+        // 选择停车场并显示详情
         function selectParking(lot) {
             selectedParking = lot;
             showParkingInfo(lot);
             map.setCenter(lot.lnglat);
             map.setZoom(18);
             parkingLots.forEach(l => {
-                l.spacesMarkers.forEach(m => m.setVisible(l === lot));
+                l.spacesData.forEach(space => space.marker.setVisible(l === lot));
             });
-            document.getElementById('favorite-btn').disabled = !user;
             logger.info(`选择了停车场: ${lot.name}`);
         }
 
         function showParkingInfo(lot) {
             const infoWindow = new AMap.InfoWindow({
                 content: `
-                    <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h4 style="color: #1a73e8; margin-bottom: 8px;">${lot.name}</h4>
-                        <p>可用车位: ${lot.spaces - lot.occupied}</p>
-                        <p>总车位: ${lot.spaces}</p>
-                        <p>评分: ${lot.rating}/5</p>
-                        <p>经纬度: ${lot.lnglat}</p>
-                        ${userPosition ? `<p>距离: ${calculateDistance(userPosition, lot.lnglat).toFixed(2)} 公里</p>` : ''}
-                    </div>
+                    <h4>${lot.name}</h4>
+                    <p>可用车位: ${lot.spaces - lot.occupied}</p>
+                    <p>总车位: ${lot.spaces}</p>
+                    <p>评分: ${lot.rating}/5</p>
+                    <p>经纬度: ${lot.lnglat}</p>
+                    ${userPosition ? `<p>距离: ${calculateDistance(userPosition, lot.lnglat).toFixed(2)} 公里</p>` : ''}
                 `,
                 offset: new AMap.Pixel(0, -30)
             });
@@ -569,7 +581,6 @@
                             clearDistrict();
                             drawDistrict(districtData);
                             updateDistrictOptions(adcode);
-                            fetchWeather(districtData.center);
                         } else {
                             logger.error('行政区划查询失败:', result);
                             alert('行政区划加载失败');
@@ -648,7 +659,6 @@
                             map.setCenter(tip.location);
                             map.setZoom(12);
                             clearDistrict();
-                            fetchWeather(tip.location);
                         } else {
                             logger.error('城市搜索失败:', result);
                         }
@@ -676,14 +686,12 @@
                         new AMap.Marker({
                             position: userPosition,
                             map: map,
-                            icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_bs.png',
+                            icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
                             title: '您的位置'
                         });
                         map.setCenter(userPosition);
                         map.setZoom(15);
-                        updateParkingStatus();
-                        fetchWeather(userPosition);
-                        recommendNearestParking();
+                        updateParkingUI();
                     } else {
                         logger.error('定位失败:', result.message);
                         alert('定位失败，请手动选择城市或停车场');
@@ -694,160 +702,42 @@
             }
         }
 
-        // 更新停车状态
-        function updateParkingStatus() {
-            parkingLots.forEach(lot => {
-                const change = Math.floor(Math.random() * 5) - 2;
-                lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
-                generateParkingSpaces(lot);
-                if (selectedParking === lot) {
-                    lot.spacesMarkers.forEach(m => m.setVisible(true));
-                } else {
-                    lot.spacesMarkers.forEach(m => m.setVisible(false));
-                }
-            });
-
-            const totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
-            const totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
-            const available = totalSpaces - totalOccupied;
-            const occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
-
-            document.getElementById('available-spaces').textContent = available;
-            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.5);
-            document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
-            document.getElementById('last-update').textContent = new Date().toLocaleString(currentLang);
-
-            updateParkingUI();
-        }
-
         // 更新停车场 UI
         function updateParkingUI() {
             const parkingSelect = document.getElementById('parking-select');
-            const sortBy = document.getElementById('sort-by').value;
-            let sortedLots = [...parkingLots];
-
-            if (userPosition) {
-                sortedLots = sortedLots.map(lot => ({
-                    ...lot,
-                    distance: calculateDistance(userPosition, lot.lnglat)
-                }));
-            }
-
-            sortedLots.sort((a, b) => {
-                if (sortBy === 'distance' && userPosition) return a.distance - b.distance;
-                if (sortBy === 'spaces') return (b.spaces - b.occupied) - (a.spaces - a.occupied);
-                if (sortBy === 'rating') return b.rating - a.rating;
-                return 0;
-            });
-
             parkingSelect.innerHTML = `<option value="">${translations[currentLang].selectParking}</option>`;
             markers.forEach((marker, index) => {
-                const lot = sortedLots[index];
+                const lot = parkingLots[index];
                 marker.setLabel({ content: `${lot.name} (${lot.spaces - lot.occupied}空位)` });
-                marker.setPosition(lot.lnglat);
                 const option = document.createElement('option');
                 option.value = lot.id;
-                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位${userPosition ? `, ${lot.distance.toFixed(2)}km` : ''})`;
+                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}空位)`;
                 parkingSelect.appendChild(option);
             });
         }
 
-        // 导航功能
-        function initNavigation() {
-            document.getElementById('navigate-btn').addEventListener('click', async (e) => {
-                e.preventDefault();
-                if (!userPosition) return alert(translations[currentLang].noPosition);
-                if (!selectedParking) return alert(translations[currentLang].noParking);
-                if (selectedParking.spaces - selectedParking.occupied <= 0) return alert(translations[currentLang].noSpaces);
-
-                try {
-                    await loadPlugins(['AMap.Driving']);
-                    const policy = document.getElementById('navigate-policy').value;
-                    const driving = new AMap.Driving({
-                        map: map,
-                        panel: 'panel',
-                        policy: AMap.DrivingPolicy[policy]
-                    });
-                    driving.search(userPosition, selectedParking.lnglat, (status, result) => {
-                        if (status === 'complete') {
-                            document.getElementById('panel').style.display = 'block';
-                            alert(`导航已规划，从当前位置到${selectedParking.name}，请查看路线详情！`);
-                        } else {
-                            logger.error('导航规划失败:', result);
-                            alert('导航规划失败，请重试');
-                        }
-                    });
-                } catch (e) {
-                    logger.error('导航加载失败:', e);
+        // 模拟数据流动，动态更新停车场状态
+        function updateParkingStatus() {
+            parkingLots.forEach(lot => {
+                const change = Math.floor(Math.random() * 5) - 2; // 随机变化 -2 到 +2
+                lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
+                generateParkingSpaces(lot); // 重新生成车位以反映占用状态
+                if (lot === selectedParking) {
+                    lot.spacesData.forEach(space => space.marker.setVisible(true));
+                    showParkingInfo(lot);
                 }
             });
+            updateParkingUI();
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+            logger.info('停车场状态已更新');
         }
 
-        // 用户管理
-        function initUser() {
-            document.getElementById('login-btn').addEventListener('click', () => {
-                document.getElementById('login-modal').style.display = 'flex';
+        // 初始化语言
+        function initLanguage() {
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                updateLanguage(e.target.value);
             });
-
-            document.getElementById('submit-login').addEventListener('click', () => {
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value.trim();
-                if (!username || !password) return alert('请填写用户名和密码');
-                user = { username, favorites: JSON.parse(localStorage.getItem('favorites') || '[]') };
-                document.getElementById('login-btn').textContent = `${translations[currentLang].welcome}, ${username}`;
-                document.getElementById('login-modal').style.display = 'none';
-                document.getElementById('favorite-btn').disabled = false;
-                logger.info('用户登录:', username);
-            });
-
-            document.getElementById('favorite-btn').addEventListener('click', () => {
-                if (!selectedParking || !user) return;
-                if (!user.favorites.includes(selectedParking.id)) {
-                    user.favorites.push(selectedParking.id);
-                    localStorage.setItem('favorites', JSON.stringify(user.favorites));
-                    alert(`${selectedParking.name} 已收藏`);
-                } else {
-                    alert('此停车场已收藏');
-                }
-            });
-        }
-
-        // 天气信息
-        async function fetchWeather(lnglat) {
-            const [lng, lat] = lnglat;
-            const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // 替换为您的 OpenWeatherMap API 密钥
-            try {
-                const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=${currentLang}`);
-                const data = response.data;
-                document.getElementById('weather-info').innerHTML = `
-                    ${translations[currentLang].weather}: ${data.weather[0].description}<br>
-                    ${translations[currentLang].temperature}: ${data.main.temp}°C<br>
-                    ${translations[currentLang].humidity}: ${data.main.humidity}%
-                `;
-            } catch (e) {
-                logger.error('天气获取失败:', e);
-                document.getElementById('weather-info').textContent = translations[currentLang].weatherUnavailable;
-            }
-        }
-
-        // 推荐最近停车场
-        function recommendNearestParking() {
-            if (!userPosition) return;
-            const nearest = parkingLots
-                .filter(lot => lot.spaces - lot.occupied > 0)
-                .map(lot => ({ ...lot, distance: calculateDistance(userPosition, lot.lnglat) }))
-                .sort((a, b) => a.distance - b.distance)[0];
-            if (nearest) {
-                alert(`${translations[currentLang].recommend}：${nearest.name}，距离 ${nearest.distance.toFixed(2)} 公里，${nearest.spaces - nearest.occupied} 个空位`);
-                selectParking(nearest);
-            }
-        }
-
-        // 筛选与排序
-        function initSorting() {
-            document.getElementById('sort-by').addEventListener('change', updateParkingUI);
-            document.getElementById('recommend-btn').addEventListener('click', recommendNearestParking);
+            updateLanguage(currentLang);
         }
 
         // 主初始化
@@ -857,12 +747,9 @@
             initDistricts();
             initCitySearch();
             await initGeolocation();
-            initNavigation();
-            initUser();
-            initSorting();
             initLanguage();
-            updateParkingStatus();
-            setInterval(updateParkingStatus, 5000);
+            updateParkingUI();
+            setInterval(updateParkingStatus, 5000); // 每5秒更新一次停车场状态
         };
     </script>
 </body>
