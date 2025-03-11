@@ -380,6 +380,19 @@
         // 全局状态
         let map, userPosition = null, selectedParking = null, markers = [], parkingAreas = [], currentLang = 'zh-CN', user = null;
 
+        // 缓存 DOM 元素
+        const domCache = {
+            parkingSelect: document.getElementById('parking-select'),
+            availableSpaces: document.getElementById('available-spaces'),
+            predictedDemand: document.getElementById('predicted-demand'),
+            occupancyRate: document.getElementById('occupancy-rate'),
+            trafficStatus: document.getElementById('traffic-status'),
+            lastUpdate: document.getElementById('last-update'),
+            loginBtn: document.getElementById('login-btn'),
+            districtSelect: document.getElementById('district-select'),
+            citySearch: document.getElementById('city-search')
+        };
+
         // 日志工具
         const logger = {
             info: (...args) => console.log('[INFO]', ...args),
@@ -395,37 +408,35 @@
             };
         };
 
-        const calculateDistance = (pos1, pos2) => {
-            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 返回公里数
-        };
+        const calculateDistance = (pos1, pos2) => AMap.GeometryUtil.distance(pos1, pos2) / 1000;
 
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // 更新语言
+        // 更新语言（优化：延迟非关键更新）
         function updateLanguage(lang) {
             currentLang = lang;
             const t = translations[lang];
             document.title = t.title;
             document.querySelector('h1').textContent = t.title;
-            document.querySelector('#available-spaces').previousElementSibling.textContent = t.available;
-            document.querySelector('#predicted-demand').previousElementSibling.textContent = t.demand;
-            document.querySelector('#occupancy-rate').previousElementSibling.textContent = t.occupancy;
-            document.querySelector('#traffic-status').previousElementSibling.textContent = t.traffic;
-            document.querySelector('#district-select option[value="中国"]').textContent = t.nationwide;
-            document.querySelector('#city-search').placeholder = t.searchCity;
-            document.querySelector('#parking-select option:first-child').textContent = t.selectParking;
-            document.querySelector('#navigate-btn').textContent = t.navigate;
-            document.querySelector('#recommend-btn').textContent = t.recommend;
-            document.querySelector('#favorite-btn').textContent = t.favorite;
-            document.querySelector('#login-btn').textContent = user ? `${t.welcome}, ${user.username}` : t.login;
-            document.querySelector('#last-update').parentElement.firstChild.textContent = `${t.lastUpdate}: `;
-            document.querySelector('#login-modal h2').textContent = t.loginTitle;
-            document.querySelector('#username').placeholder = t.username;
-            document.querySelector('#password').placeholder = t.password;
-            document.querySelector('#submit-login').textContent = t.submitLogin;
-            document.querySelector('#login-modal button:last-child').textContent = t.cancel;
-            updateParkingUI();
+            domCache.availableSpaces.previousElementSibling.textContent = t.available;
+            domCache.predictedDemand.previousElementSibling.textContent = t.demand;
+            domCache.occupancyRate.previousElementSibling.textContent = t.occupancy;
+            domCache.trafficStatus.previousElementSibling.textContent = t.traffic;
+            domCache.districtSelect.options[0].textContent = t.nationwide;
+            domCache.citySearch.placeholder = t.searchCity;
+            domCache.parkingSelect.options[0].textContent = t.selectParking;
+            document.getElementById('navigate-btn').textContent = t.navigate;
+            document.getElementById('recommend-btn').textContent = t.recommend;
+            document.getElementById('favorite-btn').textContent = t.favorite;
+            domCache.loginBtn.textContent = user ? `${t.welcome}, ${user.username}` : t.login;
+            domCache.lastUpdate.parentElement.firstChild.textContent = `${t.lastUpdate}: `;
+            document.getElementById('login-modal').querySelector('h2').textContent = t.loginTitle;
+            document.getElementById('username').placeholder = t.username;
+            document.getElementById('password').placeholder = t.password;
+            document.getElementById('submit-login').textContent = t.submitLogin;
+            document.getElementById('login-modal').querySelector('button:last-child').textContent = t.cancel;
+            requestAnimationFrame(updateParkingUI); // 使用 RAF 优化 UI 更新
         }
 
         // 初始化地图
@@ -455,15 +466,11 @@
         }
 
         async function loadPlugins(plugins) {
-            return new Promise((resolve, reject) => {
-                map.plugin(plugins, () => resolve());
-                setTimeout(() => reject(new Error('插件加载超时')), 5000);
-            }).catch(e => logger.error('插件加载失败:', e));
+            return new Promise((resolve) => map.plugin(plugins, resolve));
         }
 
         // 初始化停车场和车位
         function initParkingLots() {
-            const parkingSelect = document.getElementById('parking-select');
             parkingLots.forEach(lot => {
                 const marker = new AMap.Marker({
                     position: lot.lnglat,
@@ -492,28 +499,25 @@
                 parkingAreas.push(area);
 
                 generateParkingSpaces(lot);
-
-                const option = document.createElement('option');
-                option.value = lot.id;
-                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`;
-                parkingSelect.appendChild(option);
             });
 
-            parkingSelect.addEventListener('change', (e) => {
+            domCache.parkingSelect.addEventListener('change', (e) => {
                 const id = parseInt(e.target.value);
                 const lot = parkingLots.find(l => l.id === id);
                 if (lot) selectParking(lot);
             });
+            updateParkingSelectOptions(); // 单独初始化选项
         }
 
         // 生成停车场内的车位（仅初始化时调用）
         function generateParkingSpaces(lot) {
-            if (lot.spacesData.length > 0) return; // 避免重复生成
+            if (lot.spacesData.length > 0) return;
             const [lng, lat] = lot.lnglat;
             const gridSize = Math.ceil(Math.sqrt(lot.spaces));
             const stepLng = lot.width / gridSize;
             const stepLat = lot.height / gridSize;
 
+            const spacesData = [];
             for (let i = 0; i < lot.spaces; i++) {
                 const row = Math.floor(i / gridSize);
                 const col = i % gridSize;
@@ -531,17 +535,19 @@
                     visible: false
                 });
                 marker.on('click', () => showSpaceInfo(lot, spaceId, occupied, pos));
-                lot.spacesData.push({ id: spaceId, position: pos, occupied, marker });
+                spacesData.push({ id: spaceId, position: pos, occupied, marker });
             }
-            logger.info(`初始化停车场 ${lot.name} 的 ${lot.spaces} 个车位完成`);
+            lot.spacesData = spacesData;
         }
 
-        // 更新车位状态（高效更新）
+        // 更新车位状态（优化：仅更新可视区域）
         function updateParkingSpaces(lot) {
+            if (!lot.spacesData.length) return;
+            const bounds = map.getBounds();
             const occupiedCount = lot.occupied;
             lot.spacesData.forEach((space, index) => {
                 const shouldBeOccupied = index < occupiedCount;
-                if (space.occupied !== shouldBeOccupied) {
+                if (space.occupied !== shouldBeOccupied && bounds.contains(space.position)) {
                     space.occupied = shouldBeOccupied;
                     space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
                 }
@@ -551,11 +557,12 @@
         // 选择停车场并显示详情
         function selectParking(lot) {
             selectedParking = lot;
-            showParkingInfo(lot Puglia
+            showParkingInfo(lot);
             map.setCenter(lot.lnglat);
             map.setZoom(18);
             parkingLots.forEach(l => {
-                l.spacesData.forEach(space => space.marker.setVisible(l === lot));
+                const visible = l === lot;
+                l.spacesData.forEach(space => space.marker.setVisible(visible));
             });
             logger.info(`选择了停车场: ${lot.name}`);
         }
@@ -594,20 +601,18 @@
                 offset: new AMap.Pixel(0, -20)
             });
             infoWindow.open(map, position);
-            logger.info(`显示车位信息: ${spaceId}`);
         }
 
         // 初始化行政区划
         function initDistricts() {
-            const districtSelect = document.getElementById('district-select');
             Object.keys(provinces).forEach(adcode => {
                 const option = document.createElement('option');
                 option.value = adcode;
                 option.textContent = provinces[adcode].name;
-                districtSelect.appendChild(option);
+                domCache.districtSelect.appendChild(option);
             });
 
-            districtSelect.addEventListener('change', async (e) => {
+            domCache.districtSelect.addEventListener('change', async (e) => {
                 const adcode = e.target.value;
                 if (adcode === '中国') {
                     map.setZoomAndCenter(4, [104.195397, 35.86166]);
@@ -628,9 +633,6 @@
                             clearDistrict();
                             drawDistrict(districtData);
                             updateDistrictOptions(adcode);
-                        } else {
-                            logger.error('行政区划查询失败:', result);
-                            alert('行政区划加载失败');
                         }
                     });
                 } catch (e) {
@@ -640,25 +642,23 @@
         }
 
         function resetDistrictOptions() {
-            const districtSelect = document.getElementById('district-select');
-            while (districtSelect.options.length > 1) districtSelect.remove(1);
+            domCache.districtSelect.innerHTML = `<option value="中国">${translations[currentLang].nationwide}</option>`;
             Object.keys(provinces).forEach(code => {
                 const opt = document.createElement('option');
                 opt.value = code;
                 opt.textContent = provinces[code].name;
-                districtSelect.appendChild(opt);
+                domCache.districtSelect.appendChild(opt);
             });
         }
 
         function updateDistrictOptions(adcode) {
-            const districtSelect = document.getElementById('district-select');
-            while (districtSelect.options.length > 1) districtSelect.remove(1);
+            domCache.districtSelect.innerHTML = `<option value="中国">${translations[currentLang].nationwide}</option>`;
             const cities = provinces[adcode].cities || {};
             Object.keys(cities).forEach(cityCode => {
                 const opt = document.createElement('option');
                 opt.value = cityCode;
                 opt.textContent = cities[cityCode];
-                districtSelect.appendChild(opt);
+                domCache.districtSelect.appendChild(opt);
             });
         }
 
@@ -692,8 +692,7 @@
 
         // 初始化城市搜索
         function initCitySearch() {
-            const citySearch = document.getElementById('city-search');
-            citySearch.addEventListener('input', debounce(async (e) => {
+            domCache.citySearch.addEventListener('input', debounce(async (e) => {
                 const value = e.target.value.trim();
                 if (!value || value.length < 2) return;
 
@@ -706,8 +705,6 @@
                             map.setCenter(tip.location);
                             map.setZoom(12);
                             clearDistrict();
-                        } else {
-                            logger.error('城市搜索失败:', result);
                         }
                     });
                 } catch (e) {
@@ -741,7 +738,6 @@
                         updateParkingUI();
                     } else {
                         logger.error('定位失败:', result.message);
-                        alert('定位失败，请手动选择城市或停车场');
                     }
                 });
             } catch (e) {
@@ -749,37 +745,45 @@
             }
         }
 
-        // 更新停车场 UI 和状态栏
-        function updateParkingUI() {
-            const parkingSelect = document.getElementById('parking-select');
-            parkingSelect.innerHTML = `<option value="">${translations[currentLang].selectParking}</option>`;
+        // 更新停车场选择选项（单独函数优化）
+        function updateParkingSelectOptions() {
+            const fragment = document.createDocumentFragment();
+            fragment.appendChild(new Option(translations[currentLang].selectParking, ''));
             markers.forEach((marker, index) => {
                 const lot = parkingLots[index];
-                marker.setLabel({ content: `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})` });
-                const option = document.createElement('option');
-                option.value = lot.id;
-                option.textContent = `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces}${userPosition ? `, ${calculateDistance(userPosition, lot.lnglat).toFixed(2)}km` : ''})`;
-                parkingSelect.appendChild(option);
+                const text = `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces}${userPosition ? `, ${calculateDistance(userPosition, lot.lnglat).toFixed(2)}km` : ''})`;
+                fragment.appendChild(new Option(text, lot.id));
             });
+            domCache.parkingSelect.innerHTML = '';
+            domCache.parkingSelect.appendChild(fragment);
+        }
 
+        // 更新停车场 UI 和状态栏
+        function updateParkingUI() {
             const totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
             const totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
             const available = totalSpaces - totalOccupied;
             const occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
-            const predictedDemand = Math.floor(available * (0.3 + Math.random() * 0.2)); // 预测需求基于可用车位动态调整
+            const predictedDemand = Math.floor(available * (0.3 + Math.random() * 0.2));
             const trafficStatus = available > totalSpaces * 0.2 ? translations[currentLang].smooth : translations[currentLang].congested;
 
-            document.getElementById('available-spaces').textContent = available;
-            document.getElementById('predicted-demand').textContent = predictedDemand;
-            document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = trafficStatus;
-            document.getElementById('last-update').textContent = new Date().toLocaleString(currentLang);
+            domCache.availableSpaces.textContent = available;
+            domCache.predictedDemand.textContent = predictedDemand;
+            domCache.occupancyRate.textContent = `${occupancyRate}%`;
+            domCache.trafficStatus.textContent = trafficStatus;
+            domCache.lastUpdate.textContent = new Date().toLocaleString(currentLang);
+
+            markers.forEach((marker, index) => {
+                const lot = parkingLots[index];
+                marker.setLabel({ content: `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})` });
+            });
+            updateParkingSelectOptions();
         }
 
         // 自动模拟数据流动并更新状态
         function updateParkingStatus() {
             parkingLots.forEach(lot => {
-                const change = Math.floor(Math.random() * 5) - 2; // 随机变化 -2 到 +2
+                const change = Math.floor(Math.random() * 5) - 2;
                 lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
                 updateParkingSpaces(lot);
                 if (lot === selectedParking) {
@@ -787,8 +791,7 @@
                     showParkingInfo(lot);
                 }
             });
-            updateParkingUI(); // 同步更新 UI 和状态栏
-            logger.info('停车场状态已更新');
+            requestAnimationFrame(updateParkingUI); // 使用 RAF 优化渲染
         }
 
         // 初始化语言
@@ -808,7 +811,7 @@
             await initGeolocation();
             initLanguage();
             updateParkingUI();
-            setInterval(updateParkingStatus, 5000); // 每5秒自动更新一次
+            setInterval(updateParkingStatus, 5000); // 每5秒更新
         };
     </script>
 </body>
