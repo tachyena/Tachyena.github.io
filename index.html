@@ -32,8 +32,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #ffebee 100%);
-            color: #333;
+            background: linear-gradient(135deg, #e0f7fa 0%, #c8e6c9 100%);
+            color: #555;
             line-height: 1.6;
             overflow-x: hidden;
             position: relative;
@@ -45,17 +45,17 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
-            opacity: 0.3;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900"%3E%3Cpath d="M0 700 Q200 650 400 700 T800 700 T1200 700 T1440 700 V900 H0 Z" fill="%23fff" opacity="0.6"/%3E%3Cpath d="M100 600 Q300 550 500 600 T900 600 T1300 600" fill="none" stroke="%23b2ebf2" stroke-width="20" opacity="0.5"/%3E%3Ccircle cx="200" cy="300" r="50" fill="%23fff" opacity="0.8"/%3E%3Ccircle cx="1200" cy="400" r="40" fill="%23fff" opacity="0.7"/%3E%3C/svg%3E') no-repeat bottom;
+            background-size: cover;
             z-index: -1;
         }
         .container {
             max-width: 100%;
             margin: 15px auto;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             position: relative;
         }
         .logo {
@@ -64,15 +64,15 @@
             left: 20px;
             width: 60px;
             height: 60px;
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"%3E%3Cstop offset="0%" style="stop-color:%23ff6f61;stop-opacity:1" /%3E%3Cstop offset="100%" style="stop-color:%23ff9f1c;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x="30" y="50" width="40" height="30" rx="5" fill="url(%23grad)" /%3E%3Cpath d="M35 60 H65 M40 65 H60" stroke="%23fff" stroke-width="2" /%3E%3Ccircle cx="50" cy="30" r="15" fill="%23fff" /%3E%3Cpath d="M45 25 Q50 20 55 25" fill="none" stroke="%23ff6f61" stroke-width="3" /%3E%3C/svg%3E') no-repeat center;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"%3E%3Cstop offset="0%" style="stop-color:%234fc3f7;stop-opacity:1" /%3E%3Cstop offset="100%" style="stop-color:%23e0f7fa;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d="M30 70 Q50 50 70 70 T70 50 T50 30 T30 50 Z" fill="url(%23grad)" /%3E%3Ccircle cx="40" cy="40" r="5" fill="%23fff" /%3E%3Ccircle cx="60" cy="40" r="5" fill="%23fff" /%3E%3Ccircle cx="50" cy="60" r="5" fill="%23fff" /%3E%3C/svg%3E') no-repeat center;
             background-size: contain;
         }
         h1 {
             text-align: center;
-            color: #ff6f61;
+            color: #4fc3f7;
             font-size: clamp(1.5rem, 3vw, 2rem);
-            margin: 70px 0 20px;
-            font-weight: 600;
+            margin: 80px 0 20px;
+            font-weight: 500;
         }
         .status-box {
             display: flex;
@@ -83,7 +83,7 @@
         .status-item {
             background: #fff;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 15px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease;
@@ -92,55 +92,50 @@
             transform: translateY(-3px);
         }
         .status-item h3 {
-            color: #666;
+            color: #888;
             font-size: 0.9rem;
             margin-bottom: 5px;
         }
         .status-item p {
             font-size: 1.2rem;
             font-weight: 500;
-            color: #ff6f61;
+            color: #4fc3f7;
         }
         .controls {
             display: flex;
-            overflow-x: auto;
+            flex-direction: column;
             gap: 15px;
             margin: 20px 0;
-            padding-bottom: 10px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .controls::-webkit-scrollbar {
-            height: 5px;
-        }
-        .controls::-webkit-scrollbar-thumb {
-            background: #ff9f1c;
-            border-radius: 5px;
+            align-items: center;
         }
         .controls select, .controls input[type="text"], .controls .button {
-            min-width: 100px;
+            width: 100%;
+            max-width: 300px;
             padding: 12px 20px;
-            border-radius: 25px;
+            border-radius: 15px;
             background: #fff;
-            color: #ff6f61;
-            border: none;
+            color: #4fc3f7;
+            border: 1px solid #e0f7fa;
             font-size: 0.9rem;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             cursor: pointer;
         }
         .controls .stacked-menu {
             position: relative;
+            width: 100%;
+            max-width: 300px;
         }
         .controls .stacked-btn {
-            min-width: 100px;
+            width: 100%;
             padding: 12px 20px;
-            border-radius: 25px;
+            border-radius: 15px;
             background: #fff;
-            color: #ff6f61;
-            border: none;
+            color: #4fc3f7;
+            border: 1px solid #e0f7fa;
             font-size: 0.9rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             cursor: pointer;
         }
@@ -155,26 +150,24 @@
             padding: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             z-index: 10;
-            width: 150px;
+            width: 200px;
             animation: slideDown 0.3s ease;
         }
         .controls .stacked-menu.active .stacked-content {
             display: block;
         }
         .controls select:hover, .controls .button:hover, .controls .stacked-btn:hover {
-            background: #ff6f61;
+            background: #4fc3f7;
             color: #fff;
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
         .controls input[type="text"] {
-            background: #fff;
-            border: 1px solid #ddd;
-            color: #333;
+            color: #555;
         }
         .controls input[type="text"]:focus {
-            border-color: #ff6f61;
+            border-color: #4fc3f7;
             outline: none;
-            box-shadow: 0 0 5px rgba(255, 111, 97, 0.5);
+            box-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
         }
         #map {
             height: 50vh;
@@ -216,12 +209,12 @@
             width: 100%;
             margin: 10px 0;
             padding: 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #e0f7fa;
             border-radius: 10px;
-            color: #333;
+            color: #555;
         }
         .modal-content input:focus {
-            border-color: #ff6f61;
+            border-color: #4fc3f7;
             outline: none;
         }
         .loading {
@@ -229,8 +222,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background: none;
             display: none;
             z-index: 2000;
@@ -241,14 +234,14 @@
             width: 100%;
             height: 100%;
             border: 3px solid transparent;
-            border-top: 3px solid #ff6f61;
+            border-top: 3px solid #4fc3f7;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         .update-time {
             text-align: center;
             font-size: 0.8rem;
-            color: #666;
+            color: #888;
             margin-top: 15px;
         }
         @keyframes spin {
@@ -260,7 +253,8 @@
         @media (min-width: 768px) {
             .container { max-width: 700px; }
             .status-box { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .controls { overflow-x: hidden; justify-content: center; }
+            .controls { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .controls select, .controls input[type="text"], .controls .button, .controls .stacked-btn { width: auto; min-width: 150px; }
             .logo { width: 70px; height: 70px; }
         }
     </style>
@@ -285,14 +279,14 @@
         <div class="controls">
             <select id="district-select"><option value="中国">全国</option></select>
             <input type="text" id="city-search" placeholder="搜索城市">
-            <select id="parking-select"><option value="">停车场</option></select>
+            <select id="parking-select"><option value="">选择停车场</option></select>
             <div class="stacked-menu">
-                <button class="stacked-btn">更多</button>
+                <button class="stacked-btn">更多选项</button>
                 <div class="stacked-content">
                     <select id="sort-by">
-                        <option value="distance">按距离</option>
-                        <option value="spaces">按空位</option>
-                        <option value="rating">按评分</option>
+                        <option value="distance">按距离排序</option>
+                        <option value="spaces">按空位排序</option>
+                        <option value="rating">按评分排序</option>
                     </select>
                     <select id="navigate-policy">
                         <option value="LEAST_TIME">最短时间</option>
@@ -302,7 +296,7 @@
                 </div>
             </div>
             <button class="button" id="navigate-btn">导航</button>
-            <button class="button" id="recommend-btn">推荐</button>
+            <button class="button" id="recommend-btn">推荐最近</button>
             <button class="button" id="favorite-btn" disabled>收藏</button>
         </div>
         <div id="map"></div>
@@ -315,14 +309,14 @@
             <input type="text" id="username" placeholder="用户名">
             <input type="password" id="password" placeholder="密码">
             <button class="button" id="submit-login">登录</button>
-            <button class="button" style="background: #ddd; color: #333; margin-left: 10px;" onclick="closeModal('login-modal')">取消</button>
+            <button class="button" style="background: #ddd; color: #555; margin-left: 10px;" onclick="closeModal('login-modal')">取消</button>
         </div>
     </div>
     <div class="modal" id="error-modal">
         <div class="modal-content">
             <h2>错误</h2>
             <p id="error-message">地图加载失败，请检查网络或稍后重试。</p>
-            <button class="button" style="background: #ddd; color: #333;" onclick="closeModal('error-modal')">关闭</button>
+            <button class="button" style="background: #ddd; color: #555;" onclick="closeModal('error-modal')">关闭</button>
         </div>
     </div>
     <div class="loading" id="loading"></div>
@@ -529,9 +523,9 @@
                     ];
                     const area = new AMap.Polygon({
                         path: areaCoords,
-                        fillColor: '#ff9f1c',
+                        fillColor: '#b2ebf2',
                         fillOpacity: 0.3,
-                        strokeColor: '#ff6f61',
+                        strokeColor: '#4fc3f7',
                         strokeWeight: 2,
                         map: map
                     });
@@ -622,7 +616,7 @@
                 const infoWindow = new AMap.InfoWindow({
                     content: `
                         <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #ff6f61; margin-bottom: 8px;">${lot.name}</h4>
+                            <h4 style="color: #4fc3f7; margin-bottom: 8px;">${lot.name}</h4>
                             <p>${t.available}: ${lot.spaces - lot.occupied}</p>
                             <p>总车位: ${lot.spaces}</p>
                             <p>评分: ${lot.rating}/5</p>
@@ -642,7 +636,7 @@
                 const marker = lot.spacesData.find(s => s.id === spaceId).marker;
                 marker.bindPopup(`
                     <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h4 style="color: #ff6f61; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                        <h4 style="color: #4fc3f7; margin-bottom: 8px;">${t.spaceInfo}</h4>
                         <p>${t.spaceId}: ${spaceId}</p>
                         <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
                         <p>位置: ${position.join(', ')}</p>
@@ -652,7 +646,7 @@
                 const infoWindow = new AMap.InfoWindow({
                     content: `
                         <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #ff6f61; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                            <h4 style="color: #4fc3f7; margin-bottom: 8px;">${t.spaceInfo}</h4>
                             <p>${t.spaceId}: ${spaceId}</p>
                             <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
                             <p>位置: ${position.join(', ')}</p>
@@ -731,9 +725,9 @@
                 bounds.forEach(bound => {
                     const polygon = new AMap.Polygon({
                         path: bound,
-                        fillColor: '#ff9f1c',
+                        fillColor: '#b2ebf2',
                         fillOpacity: 0.3,
-                        strokeColor: '#ff6f61',
+                        strokeColor: '#4fc3f7',
                         strokeWeight: 2
                     });
                     polygons.push(polygon);
