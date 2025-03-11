@@ -32,12 +32,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background: linear-gradient(135deg, #1e1e2f, #3b2f5f, #5e3f8f);
-            color: #fff;
+            background: linear-gradient(135deg, #f5f7fa 0%, #ffebee 100%);
+            color: #333;
             line-height: 1.6;
             overflow-x: hidden;
             position: relative;
-            animation: starrySky 20s infinite alternate;
         }
         body::before {
             content: '';
@@ -46,110 +45,115 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-            animation: flowLight 15s infinite linear;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+            opacity: 0.3;
             z-index: -1;
         }
         .container {
             max-width: 100%;
             margin: 15px auto;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             position: relative;
         }
         .logo {
-            display: block;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 15px;
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"%3E%3Cstop offset="0%" style="stop-color:%236b48ff;stop-opacity:1" /%3E%3Cstop offset="100%" style="stop-color:%23a855f7;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d="M30 70 H70 V50 A20 20 0 0 0 50 30 A20 20 0 0 0 30 50 V70 Z" fill="url(%23grad)" /%3E%3Cpath d="M40 60 H60 M45 65 H55" stroke="%23fff" stroke-width="2" /%3E%3Cpath d="M45 20 Q50 10 55 20 Q60 30 50 40 Q40 30 45 20 Z" fill="%23fff" opacity="0.8" /%3E%3Ctext x="50" y="90" font-size="16" fill="%23fff" text-anchor="middle" font-family="Poppins, Arial" font-weight="bold"%3E智泊云%3C/text%3E%3C/svg%3E') no-repeat center;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"%3E%3Cstop offset="0%" style="stop-color:%23ff6f61;stop-opacity:1" /%3E%3Cstop offset="100%" style="stop-color:%23ff9f1c;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x="30" y="50" width="40" height="30" rx="5" fill="url(%23grad)" /%3E%3Cpath d="M35 60 H65 M40 65 H60" stroke="%23fff" stroke-width="2" /%3E%3Ccircle cx="50" cy="30" r="15" fill="%23fff" /%3E%3Cpath d="M45 25 Q50 20 55 25" fill="none" stroke="%23ff6f61" stroke-width="3" /%3E%3C/svg%3E') no-repeat center;
             background-size: contain;
         }
         h1 {
             text-align: center;
-            color: #fff;
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            color: #ff6f61;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            margin: 70px 0 20px;
+            font-weight: 600;
         }
         .status-box {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             margin: 20px 0;
         }
         .status-item {
-            background: rgba(255, 255, 255, 0.15);
+            background: #fff;
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 10px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease;
         }
         .status-item:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
         }
         .status-item h3 {
-            color: #fff;
-            font-size: 1rem;
+            color: #666;
+            font-size: 0.9rem;
             margin-bottom: 5px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
         .status-item p {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #ff6f61;
         }
         .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 10px;
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
             margin: 20px 0;
-            justify-items: center;
+            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .controls::-webkit-scrollbar {
+            height: 5px;
+        }
+        .controls::-webkit-scrollbar-thumb {
+            background: #ff9f1c;
+            border-radius: 5px;
         }
         .controls select, .controls input[type="text"], .controls .button {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #6b48ff, #a855f7);
-            color: #fff;
+            min-width: 100px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            background: #fff;
+            color: #ff6f61;
             border: none;
             font-size: 0.9rem;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
+            cursor: pointer;
         }
         .controls .stacked-menu {
             position: relative;
         }
         .controls .stacked-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #6b48ff, #a855f7);
-            color: #fff;
+            min-width: 100px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            background: #fff;
+            color: #ff6f61;
             border: none;
             font-size: 0.9rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         .controls .stacked-content {
             display: none;
             position: absolute;
-            top: 90px;
+            top: 50px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.2);
+            background: #fff;
             border-radius: 15px;
             padding: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             z-index: 10;
             width: 150px;
             animation: slideDown 0.3s ease;
@@ -158,33 +162,34 @@
             display: block;
         }
         .controls select:hover, .controls .button:hover, .controls .stacked-btn:hover {
-            background: linear-gradient(135deg, #5a3ad9, #9333ea);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            transform: translateY(-5px);
+            background: #ff6f61;
+            color: #fff;
+            transform: scale(1.05);
         }
         .controls input[type="text"] {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #333;
         }
         .controls input[type="text"]:focus {
-            border-color: #fff;
+            border-color: #ff6f61;
             outline: none;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 5px rgba(255, 111, 97, 0.5);
         }
         #map {
             height: 50vh;
             width: 100%;
             border-radius: 15px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #fff;
             margin: 20px 0;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
         .user-box {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             display: flex;
-            flex-direction: column;
             gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
         }
         .modal {
             display: none;
@@ -193,33 +198,30 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
             z-index: 1000;
             animation: fadeIn 0.3s ease;
         }
         .modal-content {
-            background: rgba(255, 255, 255, 0.15);
+            background: #fff;
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 15px;
             max-width: 90%;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         .modal-content input {
             width: 100%;
             margin: 10px 0;
             padding: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            transition: border-color 0.3s ease;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            color: #333;
         }
         .modal-content input:focus {
-            border-color: #fff;
+            border-color: #ff6f61;
             outline: none;
         }
         .loading {
@@ -227,8 +229,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: none;
             display: none;
             z-index: 2000;
@@ -238,61 +240,34 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 4px solid transparent;
-            border-top: 4px solid #a855f7;
+            border: 3px solid transparent;
+            border-top: 3px solid #ff6f61;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        .loading::after {
-            content: '';
-            position: absolute;
-            width: 70%;
-            height: 70%;
-            top: 15%;
-            left: 15%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
-            border-radius: 50%;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
         .update-time {
             text-align: center;
-            font-size: 0.9rem;
-            color: #fff;
+            font-size: 0.8rem;
+            color: #666;
             margin-top: 15px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-        }
-        @keyframes starrySky {
-            0% { background: linear-gradient(135deg, #1e1e2f, #3b2f5f, #5e3f8f); }
-            50% { background: linear-gradient(135deg, #5e3f8f, #1e1e2f, #3b2f5f); }
-            100% { background: linear-gradient(135deg, #3b2f5f, #5e3f8f, #1e1e2f); }
-        }
-        @keyframes flowLight {
-            0% { transform: translateY(0); opacity: 0.5; }
-            50% { transform: translateY(-100vh); opacity: 0.8; }
-            100% { transform: translateY(-200vh); opacity: 0; }
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.5; }
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @media (min-width: 768px) {
             .container { max-width: 700px; }
             .status-box { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .user-box { flex-direction: row; position: absolute; top: 20px; right: 20px; }
-            .controls { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
-            .logo { width: 120px; height: 120px; }
+            .controls { overflow-x: hidden; justify-content: center; }
+            .logo { width: 70px; height: 70px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="logo"></div>
         <div class="user-box">
             <button class="button" id="login-btn">登录</button>
             <select id="language-select">
@@ -300,7 +275,6 @@
                 <option value="en">English</option>
             </select>
         </div>
-        <div class="logo"></div>
         <h1>智泊云 - 智能停车场优化系统</h1>
         <div class="status-box">
             <div class="status-item"><h3>可用车位</h3><p id="available-spaces">0</p></div>
@@ -310,7 +284,7 @@
         </div>
         <div class="controls">
             <select id="district-select"><option value="中国">全国</option></select>
-            <input type="text" id="city-search" placeholder="搜索">
+            <input type="text" id="city-search" placeholder="搜索城市">
             <select id="parking-select"><option value="">停车场</option></select>
             <div class="stacked-menu">
                 <button class="stacked-btn">更多</button>
@@ -341,14 +315,14 @@
             <input type="text" id="username" placeholder="用户名">
             <input type="password" id="password" placeholder="密码">
             <button class="button" id="submit-login">登录</button>
-            <button class="button" style="background: #ccc; margin-left: 10px;" onclick="closeModal('login-modal')">取消</button>
+            <button class="button" style="background: #ddd; color: #333; margin-left: 10px;" onclick="closeModal('login-modal')">取消</button>
         </div>
     </div>
     <div class="modal" id="error-modal">
         <div class="modal-content">
             <h2>错误</h2>
             <p id="error-message">地图加载失败，请检查网络或稍后重试。</p>
-            <button class="button" style="background: #ccc;" onclick="closeModal('error-modal')">关闭</button>
+            <button class="button" style="background: #ddd; color: #333;" onclick="closeModal('error-modal')">关闭</button>
         </div>
     </div>
     <div class="loading" id="loading"></div>
@@ -555,9 +529,9 @@
                     ];
                     const area = new AMap.Polygon({
                         path: areaCoords,
-                        fillColor: '#cce5ff',
-                        fillOpacity: 0.5,
-                        strokeColor: '#6b48ff',
+                        fillColor: '#ff9f1c',
+                        fillOpacity: 0.3,
+                        strokeColor: '#ff6f61',
                         strokeWeight: 2,
                         map: map
                     });
@@ -595,13 +569,13 @@
                 const marker = isFallback ?
                     L.circleMarker([pos[1], pos[0]], {
                         radius: 6,
-                        color: occupied ? '#ffca28' : '#4caf50',
+                        color: occupied ? '#ff6f61' : '#4caf50',
                         fillOpacity: 0.8
                     }).addTo(map).setStyle({ visibility: 'hidden' }) :
                     new AMap.Marker({
                         position: pos,
                         map: map,
-                        content: `<div style="width: 12px; height: 12px; border-radius: 50%; background: ${occupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
+                        content: `<div style="width: 12px; height: 12px; border-radius: 50%; background: ${occupied ? '#ff6f61' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
                         offset: new AMap.Pixel(-6, -6),
                         visible: false
                     });
@@ -620,9 +594,9 @@
                 if (space.occupied !== shouldBeOccupied && (isFallback ? bounds.contains([space.position[1], space.position[0]]) : bounds.contains(space.position))) {
                     space.occupied = shouldBeOccupied;
                     if (isFallback) {
-                        space.marker.setStyle({ color: shouldBeOccupied ? '#ffca28' : '#4caf50' });
+                        space.marker.setStyle({ color: shouldBeOccupied ? '#ff6f61' : '#4caf50' });
                     } else {
-                        space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
+                        space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ff6f61' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
                     }
                 }
             });
@@ -647,8 +621,8 @@
             } else {
                 const infoWindow = new AMap.InfoWindow({
                     content: `
-                        <div style="padding: 10px; background: rgba(255,255,255,0.9); border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #6b48ff; margin-bottom: 8px;">${lot.name}</h4>
+                        <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h4 style="color: #ff6f61; margin-bottom: 8px;">${lot.name}</h4>
                             <p>${t.available}: ${lot.spaces - lot.occupied}</p>
                             <p>总车位: ${lot.spaces}</p>
                             <p>评分: ${lot.rating}/5</p>
@@ -667,8 +641,8 @@
             if (isFallback) {
                 const marker = lot.spacesData.find(s => s.id === spaceId).marker;
                 marker.bindPopup(`
-                    <div style="padding: 10px; background: rgba(255,255,255,0.9); border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h4 style="color: #6b48ff; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                    <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h4 style="color: #ff6f61; margin-bottom: 8px;">${t.spaceInfo}</h4>
                         <p>${t.spaceId}: ${spaceId}</p>
                         <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
                         <p>位置: ${position.join(', ')}</p>
@@ -677,8 +651,8 @@
             } else {
                 const infoWindow = new AMap.InfoWindow({
                     content: `
-                        <div style="padding: 10px; background: rgba(255,255,255,0.9); border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #6b48ff; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                        <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h4 style="color: #ff6f61; margin-bottom: 8px;">${t.spaceInfo}</h4>
                             <p>${t.spaceId}: ${spaceId}</p>
                             <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
                             <p>位置: ${position.join(', ')}</p>
@@ -757,10 +731,10 @@
                 bounds.forEach(bound => {
                     const polygon = new AMap.Polygon({
                         path: bound,
-                        fillColor: '#a855f7',
-                        fillOpacity: 0.4,
-                        strokeColor: '#6b48ff',
-                        strokeWeight: 3
+                        fillColor: '#ff9f1c',
+                        fillOpacity: 0.3,
+                        strokeColor: '#ff6f61',
+                        strokeWeight: 2
                     });
                     polygons.push(polygon);
                     map.add(polygon);
