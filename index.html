@@ -6,9 +6,8 @@
     <title>智泊云 - 智能停车场优化系统</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // 动态加载高德地图脚本
         const loadMapScript = async () => {
-            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的真实高德地图密钥
+            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 替换为您的真实高德地图密钥
             const script = document.createElement('script');
             script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
             script.async = true;
@@ -278,7 +277,6 @@
     <div class="loading" id="loading">加载中...</div>
 
     <script>
-        // 多语言支持
         const translations = {
             'zh-CN': {
                 title: '智泊云 - 智能停车场优化系统',
@@ -324,7 +322,6 @@
             }
         };
 
-        // 数据定义
         const provinces = {
             "11": { name: "北京市", cities: { "1101": "北京市" } },
             "31": { name: "上海市", cities: { "3101": "上海市" } },
@@ -338,43 +335,19 @@
         };
 
         const parkingLots = [
-            // 武汉市停车场（20个）
-            { id: 1, name: "武汉停车场A", lnglat: [114.305392, 30.593099], spaces: 100, occupied: 60, rating: 4.0, width: 0.002, height: 0.002, spacesData: [] },
-            { id: 2, name: "武汉停车场B", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0015, height: 0.0015, spacesData: [] },
-            { id: 3, name: "武汉停车场C", lnglat: [114.310000, 30.600000], spaces: 45, occupied: 20, rating: 4.3, width: 0.0025, height: 0.0025, spacesData: [] },
-            { id: 4, name: "武汉停车场D", lnglat: [114.295000, 30.580000], spaces: 55, occupied: 35, rating: 4.7, width: 0.001, height: 0.001, spacesData: [] },
-            { id: 5, name: "武汉停车场E", lnglat: [114.320000, 30.610000], spaces: 70, occupied: 50, rating: 4.1, width: 0.003, height: 0.003, spacesData: [] },
-            { id: 6, name: "武汉停车场F", lnglat: [114.290000, 30.590000], spaces: 35, occupied: 15, rating: 4.4, width: 0.0012, height: 0.0012, spacesData: [] },
-            { id: 7, name: "武汉停车场G", lnglat: [114.315000, 30.605000], spaces: 50, occupied: 30, rating: 4.9, width: 0.0022, height: 0.0022, spacesData: [] },
-            { id: 8, name: "武汉停车场H", lnglat: [114.325000, 30.615000], spaces: 60, occupied: 40, rating: 4.2, width: 0.0028, height: 0.0028, spacesData: [] },
-            { id: 9, name: "武汉停车场I", lnglat: [114.285000, 30.575000], spaces: 40, occupied: 25, rating: 4.5, width: 0.0018, height: 0.0018, spacesData: [] },
-            { id: 10, name: "武汉停车场J", lnglat: [114.330000, 30.620000], spaces: 80, occupied: 50, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
-            { id: 11, name: "武汉停车场K", lnglat: [114.275000, 30.565000], spaces: 90, occupied: 60, rating: 4.6, width: 0.004, height: 0.004, spacesData: [] },
-            { id: 12, name: "武汉停车场L", lnglat: [114.340000, 30.630000], spaces: 30, occupied: 10, rating: 4.1, width: 0.001, height: 0.001, spacesData: [] },
-            { id: 13, name: "武汉停车场M", lnglat: [114.265000, 30.555000], spaces: 70, occupied: 40, rating: 4.4, width: 0.0025, height: 0.0025, spacesData: [] },
-            { id: 14, name: "武汉停车场N", lnglat: [114.350000, 30.640000], spaces: 55, occupied: 30, rating: 4.8, width: 0.002, height: 0.002, spacesData: [] },
-            { id: 15, name: "武汉停车场O", lnglat: [114.255000, 30.545000], spaces: 60, occupied: 35, rating: 4.2, width: 0.003, height: 0.003, spacesData: [] },
-            { id: 16, name: "武汉停车场P", lnglat: [114.360000, 30.650000], spaces: 40, occupied: 20, rating: 4.5, width: 0.0015, height: 0.0015, spacesData: [] },
-            { id: 17, name: "武汉停车场Q", lnglat: [114.245000, 30.535000], spaces: 80, occupied: 50, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
-            { id: 18, name: "武汉停车场R", lnglat: [114.370000, 30.660000], spaces: 50, occupied: 30, rating: 4.6, width: 0.002, height: 0.002, spacesData: [] },
-            { id: 19, name: "武汉停车场S", lnglat: [114.235000, 30.525000], spaces: 90, occupied: 60, rating: 4.1, width: 0.004, height: 0.004, spacesData: [] },
-            { id: 20, name: "武汉停车场T", lnglat: [114.380000, 30.670000], spaces: 60, occupied: 40, rating: 4.4, width: 0.0025, height: 0.0025, spacesData: [] },
-            // 其他城市停车场
-            { id: 21, name: "北京停车场U", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30, rating: 4.5, width: 0.002, height: 0.002, spacesData: [] },
-            { id: 22, name: "上海停车场V", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25, rating: 4.2, width: 0.0015, height: 0.0015, spacesData: [] },
-            { id: 23, name: "广州停车场W", lnglat: [113.264434, 23.129162], spaces: 30, occupied: 10, rating: 4.8, width: 0.0025, height: 0.0025, spacesData: [] }
+            { id: 1, name: "武汉停车场A", city: "4201", lnglat: [114.305392, 30.593099], spaces: 100, occupied: 60, rating: 4.0, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 2, name: "武汉停车场B", city: "4201", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0015, height: 0.0015, spacesData: [] },
+            { id: 3, name: "北京停车场C", city: "1101", lnglat: [116.397428, 39.90923], spaces: 50, occupied: 30, rating: 4.5, width: 0.002, height: 0.002, spacesData: [] },
+            { id: 4, name: "上海停车场D", city: "3101", lnglat: [121.473701, 31.230416], spaces: 40, occupied: 25, rating: 4.2, width: 0.0015, height: 0.0015, spacesData: [] }
         ];
 
-        // 全局状态
         let map, userPosition = null, selectedParking = null, markers = [], parkingAreas = [], currentLang = 'zh-CN', user = null;
 
-        // 日志工具
         const logger = {
             info: (...args) => console.log('[INFO]', ...args),
             error: (...args) => console.error('[ERROR]', ...args)
         };
 
-        // 工具函数
         const debounce = (fn, delay) => {
             let timeout;
             return (...args) => {
@@ -384,13 +357,12 @@
         };
 
         const calculateDistance = (pos1, pos2) => {
-            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 返回公里数
+            return AMap.GeometryUtil.distance(pos1, pos2) / 1000;
         };
 
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // 更新语言
         function updateLanguage(lang) {
             currentLang = lang;
             const t = translations[lang];
@@ -416,7 +388,6 @@
             updateParkingUI();
         }
 
-        // 初始化地图
         async function initMap() {
             showLoading(true);
             try {
@@ -449,7 +420,6 @@
             }).catch(e => logger.error('插件加载失败:', e));
         }
 
-        // 初始化停车场和车位
         function initParkingLots() {
             const parkingSelect = document.getElementById('parking-select');
             parkingLots.forEach(lot => {
@@ -494,7 +464,6 @@
             });
         }
 
-        // 生成停车场内的车位
         function generateParkingSpaces(lot) {
             lot.spacesData.forEach(space => space.marker && map.remove(space.marker));
             lot.spacesData = [];
@@ -523,7 +492,6 @@
             }
         }
 
-        // 选择停车场并显示详情
         function selectParking(lot) {
             selectedParking = lot;
             showParkingInfo(lot);
@@ -550,7 +518,6 @@
             infoWindow.open(map, lot.lnglat);
         }
 
-        // 初始化行政区划
         function initDistricts() {
             const districtSelect = document.getElementById('district-select');
             Object.keys(provinces).forEach(adcode => {
@@ -643,7 +610,6 @@
             });
         }
 
-        // 初始化城市搜索
         function initCitySearch() {
             const citySearch = document.getElementById('city-search');
             citySearch.addEventListener('input', debounce(async (e) => {
@@ -669,7 +635,6 @@
             }, 300));
         }
 
-        // 初始化用户定位
         async function initGeolocation() {
             try {
                 await loadPlugins(['AMap.Geolocation']);
@@ -702,7 +667,6 @@
             }
         }
 
-        // 更新停车场 UI
         function updateParkingUI() {
             const parkingSelect = document.getElementById('parking-select');
             parkingSelect.innerHTML = `<option value="">${translations[currentLang].selectParking}</option>`;
@@ -716,23 +680,23 @@
             });
         }
 
-        // 模拟数据流动，动态更新停车场状态
         function updateParkingStatus() {
             parkingLots.forEach(lot => {
-                const change = Math.floor(Math.random() * 5) - 2; // 随机变化 -2 到 +2
+                const change = Math.floor(Math.random() * 5) - 2;
                 lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
-                generateParkingSpaces(lot); // 重新生成车位以反映占用状态
+                lot.spacesData.forEach((space, index) => {
+                    space.occupied = index < lot.occupied;
+                    space.marker.setContent(`<div style="width: 10px; height: 10px; border-radius: 50%; background: ${space.occupied ? 'yellow' : 'green'};"></div>`);
+                });
                 if (lot === selectedParking) {
                     lot.spacesData.forEach(space => space.marker.setVisible(true));
-                    showParkingInfo(lot);
                 }
             });
             updateParkingUI();
             document.getElementById('last-update').textContent = new Date().toLocaleString();
-            logger.info('停车场状态已更新');
+            logger.info('停车场和车位状态已更新');
         }
 
-        // 初始化语言
         function initLanguage() {
             document.getElementById('language-select').addEventListener('change', (e) => {
                 updateLanguage(e.target.value);
@@ -740,7 +704,6 @@
             updateLanguage(currentLang);
         }
 
-        // 主初始化
         window.onload = async () => {
             await initMap();
             initParkingLots();
@@ -749,7 +712,7 @@
             await initGeolocation();
             initLanguage();
             updateParkingUI();
-            setInterval(updateParkingStatus, 5000); // 每5秒更新一次停车场状态
+            setInterval(updateParkingStatus, 5000);
         };
     </script>
 </body>
