@@ -304,7 +304,9 @@
                 spaceId: '车位编号',
                 status: '状态',
                 occupied: '占用',
-                free: '空闲'
+                free: '空闲',
+                smooth: '畅通',
+                congested: '拥堵'
             },
             'en': {
                 title: 'SmartPark - Intelligent Parking System',
@@ -330,7 +332,9 @@
                 spaceId: 'Space ID',
                 status: 'Status',
                 occupied: 'Occupied',
-                free: 'Free'
+                free: 'Free',
+                smooth: 'Smooth',
+                congested: 'Congested'
             }
         };
 
@@ -348,13 +352,9 @@
         };
 
         const parkingLots = [
-            // 北京
             { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 80, occupied: 50, rating: 4.5, width: 0.004, height: 0.004, spacesData: [] },
-            // 上海
             { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 120, occupied: 90, rating: 4.2, width: 0.005, height: 0.005, spacesData: [] },
-            // 广州
             { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 60, occupied: 20, rating: 4.8, width: 0.003, height: 0.003, spacesData: [] },
-            // 武汉（20个）
             { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] },
             { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] },
             { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
@@ -506,9 +506,9 @@
             });
         }
 
-        // 生成停车场内的车位并添加详细信息
+        // 生成停车场内的车位（仅初始化时调用）
         function generateParkingSpaces(lot) {
-            if (lot.spacesData.length > 0) return; // 只在初始化时生成，避免重复创建
+            if (lot.spacesData.length > 0) return; // 避免重复生成
             const [lng, lat] = lot.lnglat;
             const gridSize = Math.ceil(Math.sqrt(lot.spaces));
             const stepLng = lot.width / gridSize;
@@ -533,27 +533,25 @@
                 marker.on('click', () => showSpaceInfo(lot, spaceId, occupied, pos));
                 lot.spacesData.push({ id: spaceId, position: pos, occupied, marker });
             }
+            logger.info(`初始化停车场 ${lot.name} 的 ${lot.spaces} 个车位完成`);
         }
 
         // 更新车位状态（高效更新）
         function updateParkingSpaces(lot) {
             const occupiedCount = lot.occupied;
-            let occupiedSpaces = 0;
             lot.spacesData.forEach((space, index) => {
                 const shouldBeOccupied = index < occupiedCount;
                 if (space.occupied !== shouldBeOccupied) {
                     space.occupied = shouldBeOccupied;
                     space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
-                    occupiedSpaces++;
                 }
             });
-            logger.info(`更新停车场 ${lot.name} 的车位状态，占用: ${occupiedCount}`);
         }
 
         // 选择停车场并显示详情
         function selectParking(lot) {
             selectedParking = lot;
-            showParkingInfo(lot);
+            showParkingInfo(lot Puglia
             map.setCenter(lot.lnglat);
             map.setZoom(18);
             parkingLots.forEach(l => {
@@ -768,26 +766,28 @@
             const totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
             const available = totalSpaces - totalOccupied;
             const occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
+            const predictedDemand = Math.floor(available * (0.3 + Math.random() * 0.2)); // 预测需求基于可用车位动态调整
+            const trafficStatus = available > totalSpaces * 0.2 ? translations[currentLang].smooth : translations[currentLang].congested;
 
             document.getElementById('available-spaces').textContent = available;
-            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.3); // 随机预测需求
+            document.getElementById('predicted-demand').textContent = predictedDemand;
             document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
-            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
+            document.getElementById('traffic-status').textContent = trafficStatus;
             document.getElementById('last-update').textContent = new Date().toLocaleString(currentLang);
         }
 
-        // 自动模拟数据流动
+        // 自动模拟数据流动并更新状态
         function updateParkingStatus() {
             parkingLots.forEach(lot => {
                 const change = Math.floor(Math.random() * 5) - 2; // 随机变化 -2 到 +2
                 lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
-                updateParkingSpaces(lot); // 更新车位状态
+                updateParkingSpaces(lot);
                 if (lot === selectedParking) {
                     lot.spacesData.forEach(space => space.marker.setVisible(true));
-                    showParkingInfo(lot); // 刷新选中的停车场信息
+                    showParkingInfo(lot);
                 }
             });
-            updateParkingUI(); // 更新界面
+            updateParkingUI(); // 同步更新 UI 和状态栏
             logger.info('停车场状态已更新');
         }
 
