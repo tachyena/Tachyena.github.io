@@ -299,7 +299,12 @@
                 username: '用户名',
                 password: '密码',
                 submitLogin: '登录',
-                cancel: '取消'
+                cancel: '取消',
+                spaceInfo: '车位信息',
+                spaceId: '车位编号',
+                status: '状态',
+                occupied: '占用',
+                free: '空闲'
             },
             'en': {
                 title: 'SmartPark - Intelligent Parking System',
@@ -320,31 +325,23 @@
                 username: 'Username',
                 password: 'Password',
                 submitLogin: 'Login',
-                cancel: 'Cancel'
+                cancel: 'Cancel',
+                spaceInfo: 'Parking Space Info',
+                spaceId: 'Space ID',
+                status: 'Status',
+                occupied: 'Occupied',
+                free: 'Free'
             }
         };
 
         // 数据定义
         const provinces = {
             "11": { name: "北京市", cities: { "1101": "北京市" } },
-            "12": { name: "天津市", cities: { "1201": "天津市" } },
-            "13": { name: "河北省", cities: { "1301": "石家庄市" } },
-            "21": { name: "辽宁省", cities: { "2101": "沈阳市" } },
-            "22": { name: "吉林省", cities: { "2201": "长春市" } },
-            "23": { name: "黑龙江省", cities: { "2301": "哈尔滨市" } },
             "31": { name: "上海市", cities: { "3101": "上海市" } },
+            "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市" } },
+            "42": { name: "湖北省", cities: { "4201": "武汉市" } },
             "32": { name: "江苏省", cities: { "3201": "南京市" } },
             "33": { name: "浙江省", cities: { "3301": "杭州市" } },
-            "34": { name: "安徽省", cities: { "3401": "合肥市" } },
-            "35": { name: "福建省", cities: { "3501": "福州市" } },
-            "36": { name: "江西省", cities: { "3601": "南昌市" } },
-            "37": { name: "山东省", cities: { "3701": "济南市" } },
-            "41": { name: "河南省", cities: { "4101": "郑州市" } },
-            "42": { name: "湖北省", cities: { "4201": "武汉市" } },
-            "43": { name: "湖南省", cities: { "4301": "长沙市" } },
-            "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市" } },
-            "45": { name: "广西壮族自治区", cities: { "4501": "南宁市" } },
-            "46": { name: "海南省", cities: { "4601": "海口市" } },
             "50": { name: "重庆市", cities: { "5001": "重庆市" } },
             "51": { name: "四川省", cities: { "5101": "成都市" } },
             "61": { name: "陕西省", cities: { "6101": "西安市" } }
@@ -357,7 +354,7 @@
             { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 120, occupied: 90, rating: 4.2, width: 0.005, height: 0.005, spacesData: [] },
             // 广州
             { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 60, occupied: 20, rating: 4.8, width: 0.003, height: 0.003, spacesData: [] },
-            // 武汉（扩展至20个）
+            // 武汉（20个）
             { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] },
             { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] },
             { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
@@ -399,7 +396,7 @@
         };
 
         const calculateDistance = (pos1, pos2) => {
-            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 公里
+            return AMap.GeometryUtil.distance(pos1, pos2) / 1000; // 返回公里数
         };
 
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
@@ -511,9 +508,7 @@
 
         // 生成停车场内的车位并添加详细信息
         function generateParkingSpaces(lot) {
-            lot.spacesData.forEach(space => space.marker && map.remove(space.marker));
-            lot.spacesData = [];
-
+            if (lot.spacesData.length > 0) return; // 只在初始化时生成，避免重复创建
             const [lng, lat] = lot.lnglat;
             const gridSize = Math.ceil(Math.sqrt(lot.spaces));
             const stepLng = lot.width / gridSize;
@@ -527,7 +522,7 @@
                     lat - lot.height / 2 + stepLat * (row + 0.5) + (Math.random() - 0.5) * stepLat * 0.2
                 ];
                 const occupied = i < lot.occupied;
-                const spaceId = `${lot.id}-${i + 1}`; // 车位编号格式：停车场ID-车位序号
+                const spaceId = `${lot.id}-${i + 1}`;
                 const marker = new AMap.Marker({
                     position: pos,
                     map: map,
@@ -538,6 +533,21 @@
                 marker.on('click', () => showSpaceInfo(lot, spaceId, occupied, pos));
                 lot.spacesData.push({ id: spaceId, position: pos, occupied, marker });
             }
+        }
+
+        // 更新车位状态（高效更新）
+        function updateParkingSpaces(lot) {
+            const occupiedCount = lot.occupied;
+            let occupiedSpaces = 0;
+            lot.spacesData.forEach((space, index) => {
+                const shouldBeOccupied = index < occupiedCount;
+                if (space.occupied !== shouldBeOccupied) {
+                    space.occupied = shouldBeOccupied;
+                    space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ffca28' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
+                    occupiedSpaces++;
+                }
+            });
+            logger.info(`更新停车场 ${lot.name} 的车位状态，占用: ${occupiedCount}`);
         }
 
         // 选择停车场并显示详情
@@ -577,9 +587,9 @@
             const infoWindow = new AMap.InfoWindow({
                 content: `
                     <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h4 style="color: #1a73e8; margin-bottom: 8px;">车位信息</h4>
-                        <p>车位编号: ${spaceId}</p>
-                        <p>状态: ${occupied ? '占用' : '空闲'}</p>
+                        <h4 style="color: #1a73e8; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                        <p>${t.spaceId}: ${spaceId}</p>
+                        <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
                         <p>位置: ${position.join(', ')}</p>
                     </div>
                 `,
@@ -741,7 +751,7 @@
             }
         }
 
-        // 更新停车场 UI
+        // 更新停车场 UI 和状态栏
         function updateParkingUI() {
             const parkingSelect = document.getElementById('parking-select');
             parkingSelect.innerHTML = `<option value="">${translations[currentLang].selectParking}</option>`;
@@ -753,21 +763,31 @@
                 option.textContent = `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces}${userPosition ? `, ${calculateDistance(userPosition, lot.lnglat).toFixed(2)}km` : ''})`;
                 parkingSelect.appendChild(option);
             });
+
+            const totalSpaces = parkingLots.reduce((sum, lot) => sum + lot.spaces, 0);
+            const totalOccupied = parkingLots.reduce((sum, lot) => sum + lot.occupied, 0);
+            const available = totalSpaces - totalOccupied;
+            const occupancyRate = totalOccupied > 0 ? (totalOccupied / totalSpaces * 100).toFixed(1) : 0;
+
+            document.getElementById('available-spaces').textContent = available;
+            document.getElementById('predicted-demand').textContent = Math.floor(Math.random() * totalSpaces * 0.3); // 随机预测需求
+            document.getElementById('occupancy-rate').textContent = `${occupancyRate}%`;
+            document.getElementById('traffic-status').textContent = available > totalSpaces * 0.2 ? '畅通' : '拥堵';
+            document.getElementById('last-update').textContent = new Date().toLocaleString(currentLang);
         }
 
-        // 模拟数据流动
+        // 自动模拟数据流动
         function updateParkingStatus() {
             parkingLots.forEach(lot => {
                 const change = Math.floor(Math.random() * 5) - 2; // 随机变化 -2 到 +2
                 lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
-                generateParkingSpaces(lot); // 重新生成车位以反映占用状态
+                updateParkingSpaces(lot); // 更新车位状态
                 if (lot === selectedParking) {
                     lot.spacesData.forEach(space => space.marker.setVisible(true));
-                    showParkingInfo(lot);
+                    showParkingInfo(lot); // 刷新选中的停车场信息
                 }
             });
-            updateParkingUI();
-            document.getElementById('last-update').textContent = new Date().toLocaleString();
+            updateParkingUI(); // 更新界面
             logger.info('停车场状态已更新');
         }
 
@@ -788,7 +808,7 @@
             await initGeolocation();
             initLanguage();
             updateParkingUI();
-            setInterval(updateParkingStatus, 5000); // 每5秒更新一次停车场状态
+            setInterval(updateParkingStatus, 5000); // 每5秒自动更新一次
         };
     </script>
 </body>
