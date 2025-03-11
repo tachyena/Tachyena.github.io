@@ -6,15 +6,25 @@
     <title>智泊云 - 智能停车场优化系统</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // 动态加载高德地图脚本
-        const loadMapScript = async () => {
+        // 动态加载高德地图脚本（添加重试机制）
+        const loadMapScript = async (retries = 3, delay = 1000) => {
             const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的真实高德地图密钥
             const script = document.createElement('script');
             script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
             script.async = true;
-            script.onerror = () => document.getElementById('error-modal').style.display = 'flex';
             document.head.appendChild(script);
-            return new Promise(resolve => script.onload = resolve);
+
+            return new Promise((resolve, reject) => {
+                script.onload = () => resolve();
+                script.onerror = async () => {
+                    if (retries > 0) {
+                        console.warn(`地图脚本加载失败，重试剩余 ${retries} 次`);
+                        await new Promise(res => setTimeout(res, delay));
+                        return loadMapScript(retries - 1, delay * 2);
+                    }
+                    reject(new Error('地图脚本加载失败，请检查网络或密钥'));
+                };
+            });
         };
     </script>
     <style>
@@ -271,7 +281,7 @@
     <div class="modal" id="error-modal">
         <div class="modal-content">
             <h2>错误</h2>
-            <p>地图加载失败，请检查网络或稍后重试。</p>
+            <p id="error-message">地图加载失败，请检查网络或稍后重试。</p>
             <button class="button" style="background: #ccc;" onclick="closeModal('error-modal')">关闭</button>
         </div>
     </div>
@@ -390,7 +400,8 @@
             lastUpdate: document.getElementById('last-update'),
             loginBtn: document.getElementById('login-btn'),
             districtSelect: document.getElementById('district-select'),
-            citySearch: document.getElementById('city-search')
+            citySearch: document.getElementById('city-search'),
+            errorMessage: document.getElementById('error-message')
         };
 
         // 日志工具
@@ -413,7 +424,7 @@
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // 更新语言（优化：延迟非关键更新）
+        // 更新语言
         function updateLanguage(lang) {
             currentLang = lang;
             const t = translations[lang];
@@ -436,7 +447,7 @@
             document.getElementById('password').placeholder = t.password;
             document.getElementById('submit-login').textContent = t.submitLogin;
             document.getElementById('login-modal').querySelector('button:last-child').textContent = t.cancel;
-            requestAnimationFrame(updateParkingUI); // 使用 RAF 优化 UI 更新
+            requestAnimationFrame(updateParkingUI);
         }
 
         // 初始化地图
@@ -444,6 +455,7 @@
             showLoading(true);
             try {
                 await loadMapScript();
+                if (!window.AMap) throw new Error('高德地图 API 未加载');
                 map = new AMap.Map('map', {
                     zoom: 4,
                     center: [104.195397, 35.86166],
@@ -458,7 +470,8 @@
                 map.addControl(new AMap.Scale());
                 logger.info('地图初始化成功');
             } catch (e) {
-                logger.error('地图初始化失败:', e);
+                logger.error('地图初始化失败:', e.message);
+                domCache.errorMessage.textContent = `地图加载失败：${e.message}。请检查网络或密钥。`;
                 document.getElementById('error-modal').style.display = 'flex';
             } finally {
                 showLoading(false);
@@ -506,10 +519,10 @@
                 const lot = parkingLots.find(l => l.id === id);
                 if (lot) selectParking(lot);
             });
-            updateParkingSelectOptions(); // 单独初始化选项
+            updateParkingSelectOptions();
         }
 
-        // 生成停车场内的车位（仅初始化时调用）
+        // 生成停车场内的车位
         function generateParkingSpaces(lot) {
             if (lot.spacesData.length > 0) return;
             const [lng, lat] = lot.lnglat;
@@ -540,7 +553,7 @@
             lot.spacesData = spacesData;
         }
 
-        // 更新车位状态（优化：仅更新可视区域）
+        // 更新车位状态
         function updateParkingSpaces(lot) {
             if (!lot.spacesData.length) return;
             const bounds = map.getBounds();
@@ -745,7 +758,7 @@
             }
         }
 
-        // 更新停车场选择选项（单独函数优化）
+        // 更新停车场选择选项
         function updateParkingSelectOptions() {
             const fragment = document.createDocumentFragment();
             fragment.appendChild(new Option(translations[currentLang].selectParking, ''));
@@ -791,7 +804,7 @@
                     showParkingInfo(lot);
                 }
             });
-            requestAnimationFrame(updateParkingUI); // 使用 RAF 优化渲染
+            requestAnimationFrame(updateParkingUI);
         }
 
         // 初始化语言
@@ -803,16 +816,20 @@
         }
 
         // 主初始化
-        window.onload = async () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             await initMap();
-            initParkingLots();
-            initDistricts();
-            initCitySearch();
-            await initGeolocation();
-            initLanguage();
-            updateParkingUI();
-            setInterval(updateParkingStatus, 5000); // 每5秒更新
-        };
+            if (map) { // 确保地图加载成功后再执行后续初始化
+                initParkingLots();
+                initDistricts();
+                initCitySearch();
+                await initGeolocation();
+                initLanguage();
+                updateParkingUI();
+                setInterval(updateParkingStatus, 5000);
+            } else {
+                logger.error('地图未初始化，后续功能无法执行');
+            }
+        });
     </script>
 </body>
 </html>
