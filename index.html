@@ -6,7 +6,7 @@
     <title>智泊云 - 智能停车场优化系统</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // 动态加载高德地图脚本（添加重试机制）
+        // 动态加载高德地图脚本（带重试机制）
         const loadMapScript = async (retries = 3, delay = 1000) => {
             const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的真实高德地图密钥
             const script = document.createElement('script');
@@ -348,43 +348,17 @@
             }
         };
 
-        // 数据定义
+        // 数据定义（精简为武汉市 5 个停车场，分布不均匀）
         const provinces = {
-            "11": { name: "北京市", cities: { "1101": "北京市" } },
-            "31": { name: "上海市", cities: { "3101": "上海市" } },
-            "44": { name: "广东省", cities: { "4401": "广州市", "4403": "深圳市" } },
-            "42": { name: "湖北省", cities: { "4201": "武汉市" } },
-            "32": { name: "江苏省", cities: { "3201": "南京市" } },
-            "33": { name: "浙江省", cities: { "3301": "杭州市" } },
-            "50": { name: "重庆市", cities: { "5001": "重庆市" } },
-            "51": { name: "四川省", cities: { "5101": "成都市" } },
-            "61": { name: "陕西省", cities: { "6101": "西安市" } }
+            "42": { name: "湖北省", cities: { "4201": "武汉市" } }
         };
 
         const parkingLots = [
-            { id: 1, name: "北京停车场A", lnglat: [116.397428, 39.90923], spaces: 80, occupied: 50, rating: 4.5, width: 0.004, height: 0.004, spacesData: [] },
-            { id: 2, name: "上海停车场B", lnglat: [121.473701, 31.230416], spaces: 120, occupied: 90, rating: 4.2, width: 0.005, height: 0.005, spacesData: [] },
-            { id: 3, name: "广州停车场C", lnglat: [113.264434, 23.129162], spaces: 60, occupied: 20, rating: 4.8, width: 0.003, height: 0.003, spacesData: [] },
-            { id: 4, name: "武汉停车场D", lnglat: [114.305392, 30.593099], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] },
-            { id: 5, name: "武汉停车场E", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] },
-            { id: 6, name: "武汉停车场F", lnglat: [114.310000, 30.600000], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
-            { id: 7, name: "武汉停车场G", lnglat: [114.295000, 30.580000], spaces: 150, occupied: 100, rating: 4.7, width: 0.005, height: 0.005, spacesData: [] },
-            { id: 8, name: "武汉停车场H", lnglat: [114.320000, 30.610000], spaces: 30, occupied: 10, rating: 4.1, width: 0.002, height: 0.002, spacesData: [] },
-            { id: 9, name: "武汉停车场I", lnglat: [114.290000, 30.590000], spaces: 70, occupied: 30, rating: 4.4, width: 0.003, height: 0.003, spacesData: [] },
-            { id: 10, name: "武汉停车场J", lnglat: [114.315000, 30.605000], spaces: 110, occupied: 60, rating: 4.9, width: 0.0045, height: 0.0045, spacesData: [] },
-            { id: 11, name: "武汉停车场K", lnglat: [114.285000, 30.575000], spaces: 40, occupied: 15, rating: 4.2, width: 0.0022, height: 0.0022, spacesData: [] },
-            { id: 12, name: "武汉停车场L", lnglat: [114.325000, 30.615000], spaces: 180, occupied: 120, rating: 4.6, width: 0.0055, height: 0.0055, spacesData: [] },
-            { id: 13, name: "武汉停车场M", lnglat: [114.298000, 30.588000], spaces: 100, occupied: 70, rating: 4.3, width: 0.004, height: 0.004, spacesData: [] },
-            { id: 14, name: "武汉停车场N", lnglat: [114.312000, 30.602000], spaces: 25, occupied: 10, rating: 4.8, width: 0.0018, height: 0.0018, spacesData: [] },
-            { id: 15, name: "武汉停车场O", lnglat: [114.308000, 30.598000], spaces: 130, occupied: 80, rating: 4.5, width: 0.0048, height: 0.0048, spacesData: [] },
-            { id: 16, name: "武汉停车场P", lnglat: [114.302000, 30.592000], spaces: 85, occupied: 50, rating: 4.1, width: 0.0038, height: 0.0038, spacesData: [] },
-            { id: 17, name: "武汉停车场Q", lnglat: [114.318000, 30.608000], spaces: 160, occupied: 110, rating: 4.7, width: 0.0052, height: 0.0052, spacesData: [] },
-            { id: 18, name: "武汉停车场R", lnglat: [114.292000, 30.582000], spaces: 45, occupied: 20, rating: 4.4, width: 0.0024, height: 0.0024, spacesData: [] },
-            { id: 19, name: "武汉停车场S", lnglat: [114.328000, 30.620000], spaces: 95, occupied: 60, rating: 4.6, width: 0.0042, height: 0.0042, spacesData: [] },
-            { id: 20, name: "武汉停车场T", lnglat: [114.306000, 30.596000], spaces: 140, occupied: 90, rating: 4.9, width: 0.005, height: 0.005, spacesData: [] },
-            { id: 21, name: "武汉停车场U", lnglat: [114.314000, 30.604000], spaces: 55, occupied: 25, rating: 4.3, width: 0.0028, height: 0.0028, spacesData: [] },
-            { id: 22, name: "武汉停车场V", lnglat: [114.288000, 30.578000], spaces: 175, occupied: 130, rating: 4.5, width: 0.0058, height: 0.0058, spacesData: [] },
-            { id: 23, name: "武汉停车场W", lnglat: [114.322000, 30.612000], spaces: 65, occupied: 40, rating: 4.2, width: 0.0032, height: 0.0032, spacesData: [] }
+            { id: 1, name: "武汉停车场A", lnglat: [114.305392, 30.593099], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] }, // 中心区域
+            { id: 2, name: "武汉停车场B", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] }, // 靠近中心
+            { id: 3, name: "武汉停车场C", lnglat: [114.310000, 30.600000], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] }, // 中心偏北
+            { id: 4, name: "武汉停车场D", lnglat: [114.280000, 30.570000], spaces: 120, occupied: 80, rating: 4.5, width: 0.004, height: 0.004, spacesData: [] }, // 西南偏远
+            { id: 5, name: "武汉停车场E", lnglat: [114.340000, 30.630000], spaces: 70, occupied: 30, rating: 4.7, width: 0.003, height: 0.003, spacesData: [] }  // 东北偏远
         ];
 
         // 全局状态
@@ -450,15 +424,15 @@
             requestAnimationFrame(updateParkingUI);
         }
 
-        // 初始化地图
+        // 初始化地图（默认中心设为武汉）
         async function initMap() {
             showLoading(true);
             try {
                 await loadMapScript();
                 if (!window.AMap) throw new Error('高德地图 API 未加载');
                 map = new AMap.Map('map', {
-                    zoom: 4,
-                    center: [104.195397, 35.86166],
+                    zoom: 12,
+                    center: [114.305392, 30.593099], // 默认中心为武汉
                     resizeEnable: true,
                     mapStyle: 'amap://styles/light',
                     features: ['bg', 'road', 'building', 'point'],
@@ -628,7 +602,7 @@
             domCache.districtSelect.addEventListener('change', async (e) => {
                 const adcode = e.target.value;
                 if (adcode === '中国') {
-                    map.setZoomAndCenter(4, [104.195397, 35.86166]);
+                    map.setZoomAndCenter(12, [114.305392, 30.593099]); // 默认武汉
                     clearDistrict();
                     resetDistrictOptions();
                     return;
@@ -693,7 +667,7 @@
                 map.setFitView(polygons);
             } else {
                 map.setCenter(districtData.center);
-                map.setZoom(10);
+                map.setZoom(12);
             }
         }
 
@@ -711,12 +685,12 @@
 
                 try {
                     await loadPlugins(['AMap.AutoComplete']);
-                    const autoComplete = new AMap.AutoComplete({ city: '全国' });
+                    const autoComplete = new AMap.AutoComplete({ city: '武汉市' });
                     autoComplete.search(value, (status, result) => {
                         if (status === 'complete' && result.tips?.length > 0) {
                             const tip = result.tips[0];
                             map.setCenter(tip.location);
-                            map.setZoom(12);
+                            map.setZoom(14);
                             clearDistrict();
                         }
                     });
@@ -818,7 +792,7 @@
         // 主初始化
         document.addEventListener('DOMContentLoaded', async () => {
             await initMap();
-            if (map) { // 确保地图加载成功后再执行后续初始化
+            if (map) {
                 initParkingLots();
                 initDistricts();
                 initCitySearch();
