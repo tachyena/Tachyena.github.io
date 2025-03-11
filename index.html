@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智泊云 - 梦幻智能停车</title>
+    <title>智泊云 - 智能停车场优化系统</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -36,7 +36,19 @@
             color: #fff;
             line-height: 1.6;
             overflow-x: hidden;
-            animation: dreamyGlow 10s infinite alternate;
+            position: relative;
+            animation: dreamyGlow 15s infinite alternate;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"%3E%3Cdefs%3E%3CradialGradient id="star"%3E%3Cstop offset="0%" stop-color="rgba(255,255,255,0.8)" /%3E%3Cstop offset="100%" stop-color="rgba(255,255,255,0)" /%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx="100" cy="100" r="10" fill="url(%23star)" opacity="0.6" /%3E%3Ccircle cx="700" cy="200" r="8" fill="url(%23star)" opacity="0.5" /%3E%3Ccircle cx="400" cy="600" r="12" fill="url(%23star)" opacity="0.7" /%3E%3Ccircle cx="200" cy="700" r="6" fill="url(%23star)" opacity="0.4" /%3E%3C/svg%3E') repeat;
+            animation: twinkle 20s infinite;
+            z-index: -1;
         }
         .container {
             max-width: 100%;
@@ -48,13 +60,20 @@
             backdrop-filter: blur(10px);
             position: relative;
         }
+        .logo {
+            display: block;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 10px;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="6" /%3E%3Cpath d="M50 10 A40 40 0 0 1 90 50 A40 40 0 0 1 50 90 A40 40 0 0 1 10 50 A40 40 0 0 1 50 10 Z" fill="url(%23grad)" /%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"%3E%3Cstop offset="0%" style="stop-color:%238a4af5;stop-opacity:1" /%3E%3Cstop offset="100%" style="stop-color:%23ff6bcb;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x="50" y="55" font-size="20" fill="%23fff" text-anchor="middle" font-family="Poppins, Arial" font-weight="bold"%3E智泊云%3C/text%3E%3C/svg%3E') no-repeat center;
+            background-size: contain;
+        }
         h1 {
             text-align: center;
             color: #fff;
             font-size: clamp(1.8rem, 4vw, 2.5rem);
             margin-bottom: 20px;
             text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-            animation: float 3s ease-in-out infinite;
         }
         .status-box {
             display: flex;
@@ -205,13 +224,32 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 15px 30px;
-            border-radius: 15px;
+            width: 80px;
+            height: 80px;
+            background: none;
             display: none;
             z-index: 2000;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+        .loading::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 6px solid transparent;
+            border-top: 6px solid #ff6bcb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
         }
         .update-time {
             text-align: center;
@@ -225,9 +263,18 @@
             50% { background: linear-gradient(135deg, #ffb3e6, #d4a5ff, #a5d6ff); }
             100% { background: linear-gradient(135deg, #a5d6ff, #ffb3e6, #d4a5ff); }
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.5; }
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -238,6 +285,7 @@
             .user-box { flex-direction: row; position: absolute; top: 20px; right: 20px; }
             .controls { flex-direction: row; flex-wrap: wrap; }
             .stacked-btn, select, input[type="text"], .button { width: auto; }
+            .logo { width: 150px; height: 150px; }
         }
     </style>
 </head>
@@ -250,7 +298,8 @@
                 <option value="en">English</option>
             </select>
         </div>
-        <h1>智泊云 - 梦幻智能停车</h1>
+        <div class="logo"></div>
+        <h1>智泊云 - 智能停车场优化系统</h1>
         <div class="status-box">
             <div class="status-item"><h3>可用车位</h3><p id="available-spaces">0</p></div>
             <div class="status-item"><h3>预测需求</h3><p id="predicted-demand">0</p></div>
@@ -300,13 +349,13 @@
             <button class="button" style="background: #ccc;" onclick="closeModal('error-modal')">关闭</button>
         </div>
     </div>
-    <div class="loading" id="loading">加载中...</div>
+    <div class="loading" id="loading"></div>
 
     <script>
         // 多语言支持
         const translations = {
             'zh-CN': {
-                title: '智泊云 - 梦幻智能停车',
+                title: '智泊云 - 智能停车场优化系统',
                 available: '可用车位',
                 demand: '预测需求',
                 occupancy: '占用率',
@@ -334,7 +383,7 @@
                 congested: '拥堵'
             },
             'en': {
-                title: 'SmartPark - Dreamy Parking System',
+                title: 'SmartPark - Intelligent Parking System',
                 available: 'Available Spaces',
                 demand: 'Predicted Demand',
                 occupancy: 'Occupancy Rate',
