@@ -7,28 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const loadMapScript = async (retries = 5, delay = 1000) => {
-            const key = localStorage.getItem('amap_key') || '2a3543776c048b0253b10252fa8c3356'; // 请替换为您的真实高德地图密钥
-            const script = document.createElement('script');
-            script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
-            script.async = true;
-            document.head.appendChild(script);
-
-            return new Promise((resolve, reject) => {
-                script.onload = () => resolve(true);
-                script.onerror = async () => {
-                    if (retries > 0 && navigator.onLine) {
-                        console.warn(`地图脚本加载失败，重试剩余 ${retries} 次`);
-                        await new Promise(res => setTimeout(res, delay));
-                        return loadMapScript(retries - 1, delay * 1.5);
-                    }
-                    reject(new Error('高德地图脚本加载失败，可能由于网络或密钥问题'));
-                };
-            });
-        };
-    </script>
     <style>
+        /* Existing styles remain unchanged */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', Arial, sans-serif;
@@ -45,7 +25,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900"%3E%3C!-- 城市剪影 --%3E%3Cpath d="M0 700 Q200 650 400 700 T800 700 T1200 700 T1440 700 V900 H0 Z" fill="%23eceff1" opacity="0.8"/%3E%3Crect x="100" y="650" width="50" height="50" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="150" y="620" width="40" height="80" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="300" y="670" width="60" height="30" fill="%23b0bec5" opacity="0.6"/%3E%3Cpath d="M350 650 L370 630 L390 650 Z" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="600" y="640" width="50" height="60" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="900" y="660" width="70" height="40" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="1100" y="620" width="40" height="80" fill="%23b0bec5" opacity="0.6"/%3E%3C!-- 云朵 --%3E%3Ccircle cx="200" cy="200" r="60" fill="%23fff" opacity="0.8"/%3E%3Ccircle cx="250" cy="230" r="40" fill="%23fff" opacity="0.8"/%3E%3Ccircle cx="150" cy="250" r="30" fill="%23fff" opacity="0.8"/%3E%3Cpath d="M400 300 Q450 250 500 300 T600 300" fill="none" stroke="%23b2ebf2" stroke-width="20" opacity="0.5"/%3E%3Ccircle cx="1200" cy="150" r="50" fill="%23fff" opacity="0.7"/%3E%3Ccircle cx="1250" cy="180" r="30" fill="%23fff" opacity="0.7"/%3E%3C!-- 停车场符号 --%3E%3Crect x="300" y="450" width="50" height="30" fill="none" stroke="%23ffccbc" stroke-width="2" opacity="0.6"/%3E%3Cpath d="M310 460 H340 M315 465 H335" stroke="%23fff" stroke-width="2" opacity="0.8"/%3E%3Crect x="1000" y="500" width="40" height="25" fill="none" stroke="%23ffccbc" stroke-width="2" opacity="0.6"/%3E%3Cpath d="M1010 510 H1030 M1015 515 H1025" stroke="%23fff" stroke-width="2" opacity="0.8"/%3E%3C!-- 网格点 --%3E%3Ccircle cx="500" cy="400" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="520" cy="420" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="480" cy="380" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="800" cy="200" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="820" cy="220" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3C/svg%3E') no-repeat bottom;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900"%3E%3Cpath d="M0 700 Q200 650 400 700 T800 700 T1200 700 T1440 700 V900 H0 Z" fill="%23eceff1" opacity="0.8"/%3E%3Crect x="100" y="650" width="50" height="50" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="150" y="620" width="40" height="80" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="300" y="670" width="60" height="30" fill="%23b0bec5" opacity="0.6"/%3E%3Cpath d="M350 650 L370 630 L390 650 Z" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="600" y="640" width="50" height="60" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="900" y="660" width="70" height="40" fill="%23b0bec5" opacity="0.6"/%3E%3Crect x="1100" y="620" width="40" height="80" fill="%23b0bec5" opacity="0.6"/%3E%3Ccircle cx="200" cy="200" r="60" fill="%23fff" opacity="0.8"/%3E%3Ccircle cx="250" cy="230" r="40" fill="%23fff" opacity="0.8"/%3E%3Ccircle cx="150" cy="250" r="30" fill="%23fff" opacity="0.8"/%3E%3Cpath d="M400 300 Q450 250 500 300 T600 300" fill="none" stroke="%23b2ebf2" stroke-width="20" opacity="0.5"/%3E%3Ccircle cx="1200" cy="150" r="50" fill="%23fff" opacity="0.7"/%3E%3Ccircle cx="1250" cy="180" r="30" fill="%23fff" opacity="0.7"/%3E%3Crect x="300" y="450" width="50" height="30" fill="none" stroke="%23ffccbc" stroke-width="2" opacity="0.6"/%3E%3Cpath d="M310 460 H340 M315 465 H335" stroke="%23fff" stroke-width="2" opacity="0.8"/%3E%3Crect x="1000" y="500" width="40" height="25" fill="none" stroke="%23ffccbc" stroke-width="2" opacity="0.6"/%3E%3Cpath d="M1010 510 H1030 M1015 515 H1025" stroke="%23fff" stroke-width="2" opacity="0.8"/%3E%3Ccircle cx="500" cy="400" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="520" cy="420" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="480" cy="380" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="800" cy="200" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3Ccircle cx="820" cy="220" r="3" fill="%234fc3f7" opacity="0.6"/%3E%3C/svg%3E') no-repeat bottom;
             background-size: cover;
             z-index: -1;
         }
@@ -386,14 +366,14 @@
         };
 
         const parkingLots = [
-            { id: 1, name: "武汉停车场A", lnglat: [114.305392, 30.593099], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] },
-            { id: 2, name: "武汉停车场B", lnglat: [114.300000, 30.595000], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] },
-            { id: 3, name: "武汉停车场C", lnglat: [114.310000, 30.600000], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
-            { id: 4, name: "武汉停车场D", lnglat: [114.280000, 30.570000], spaces: 120, occupied: 80, rating: 4.5, width: 0.004, height: 0.004, spacesData: [] },
-            { id: 5, name: "武汉停车场E", lnglat: [114.340000, 30.630000], spaces: 70, occupied: 30, rating: 4.7, width: 0.003, height: 0.003, spacesData: [] }
+            { id: 1, name: "武汉停车场A", lnglat: [114.305, 30.593], spaces: 200, occupied: 150, rating: 4.0, width: 0.006, height: 0.006, spacesData: [] },
+            { id: 2, name: "武汉停车场B", lnglat: [114.250, 30.620], spaces: 50, occupied: 20, rating: 4.6, width: 0.0025, height: 0.0025, spacesData: [] },
+            { id: 3, name: "武汉停车场C", lnglat: [114.350, 30.550], spaces: 90, occupied: 40, rating: 4.3, width: 0.0035, height: 0.0035, spacesData: [] },
+            { id: 4, name: "武汉停车场D", lnglat: [114.280, 30.580], spaces: 120, occupied: 80, rating: 4.5, width: 0.004, height: 0.004, spacesData: [] },
+            { id: 5, name: "武汉停车场E", lnglat: [114.320, 30.610], spaces: 70, occupied: 30, rating: 4.7, width: 0.003, height: 0.003, spacesData: [] }
         ];
 
-        let map, userPosition = null, selectedParking = null, markers = [], parkingAreas = [], currentLang = 'zh-CN', user = null, isFallback = false;
+        let map, userPosition = null, selectedParking = null, markers = [], parkingAreas = [], currentLang = 'zh-CN', user = null;
 
         const domCache = {
             parkingSelect: document.getElementById('parking-select'),
@@ -421,9 +401,18 @@
             };
         };
 
-        const calculateDistance = (pos1, pos2) => isFallback ? 
-            Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2)) * 111 : 
-            AMap.GeometryUtil.distance(pos1, pos2) / 1000;
+        const calculateDistance = (pos1, pos2) => {
+            const [lat1, lon1] = pos1;
+            const [lat2, lon2] = pos2;
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        };
 
         const showLoading = (show) => document.getElementById('loading').style.display = show ? 'block' : 'none';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
@@ -453,84 +442,41 @@
             requestAnimationFrame(updateParkingUI);
         }
 
-        async function initMap() {
+        function initMap() {
             showLoading(true);
-            try {
-                const amapLoaded = await loadMapScript();
-                if (amapLoaded && window.AMap) {
-                    map = new AMap.Map('map', {
-                        zoom: 12,
-                        center: [114.305392, 30.593099],
-                        resizeEnable: true,
-                        mapStyle: 'amap://styles/light',
-                        features: ['bg', 'road', 'building', 'point'],
-                        viewMode: '2D',
-                        showLabel: true
-                    });
-                    await loadPlugins(['AMap.ToolBar', 'AMap.Scale']);
-                    map.addControl(new AMap.ToolBar());
-                    map.addControl(new AMap.Scale());
-                    logger.info('高德地图初始化成功');
-                } else {
-                    throw new Error('高德地图 API 未加载');
-                }
-            } catch (e) {
-                logger.error('高德地图初始化失败:', e.message);
-                domCache.errorMessage.textContent = `高德地图加载失败：${e.message}，已切换至备用地图`;
-                document.getElementById('error-modal').style.display = 'flex';
-                isFallback = true;
-                initFallbackMap();
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function initFallbackMap() {
             map = L.map('map', {
-                center: [30.593099, 114.305392],
+                center: [30.593, 114.305],
                 zoom: 12
             });
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
-            logger.info('已切换至 Leaflet 备用地图');
-        }
-
-        async function loadPlugins(plugins) {
-            return new Promise((resolve) => map.plugin(plugins, resolve));
+            logger.info('Leaflet 地图初始化成功');
+            showLoading(false);
         }
 
         function initParkingLots() {
             parkingLots.forEach(lot => {
-                const marker = isFallback ? 
-                    L.marker([lot.lnglat[1], lot.lnglat[0]], { title: lot.name }).addTo(map).bindPopup(`${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`) :
-                    new AMap.Marker({
-                        position: lot.lnglat,
-                        title: lot.name,
-                        map: map,
-                        label: { content: `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`, offset: new AMap.Pixel(10, -10) }
-                    });
+                const marker = L.marker([lot.lnglat[1], lot.lnglat[0]], { title: lot.name })
+                    .addTo(map)
+                    .bindPopup(`${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`);
                 marker.on('click', () => selectParking(lot));
                 markers.push(marker);
 
-                if (!isFallback) {
-                    const [lng, lat] = lot.lnglat;
-                    const areaCoords = [
-                        [lng - lot.width / 2, lat - lot.height / 2],
-                        [lng + lot.width / 2, lat - lot.height / 2],
-                        [lng + lot.width / 2, lat + lot.height / 2],
-                        [lng - lot.width / 2, lat + lot.height / 2]
-                    ];
-                    const area = new AMap.Polygon({
-                        path: areaCoords,
-                        fillColor: '#b2ebf2',
-                        fillOpacity: 0.3,
-                        strokeColor: '#4fc3f7',
-                        strokeWeight: 2,
-                        map: map
-                    });
-                    parkingAreas.push(area);
-                }
+                const [lng, lat] = lot.lnglat;
+                const areaCoords = [
+                    [lat - lot.height / 2, lng - lot.width / 2],
+                    [lat - lot.height / 2, lng + lot.width / 2],
+                    [lat + lot.height / 2, lng + lot.width / 2],
+                    [lat + lot.height / 2, lng - lot.width / 2]
+                ];
+                const area = L.polygon(areaCoords, {
+                    color: '#4fc3f7',
+                    fillColor: '#b2ebf2',
+                    fillOpacity: 0.3,
+                    weight: 2
+                }).addTo(map);
+                parkingAreas.push(area);
 
                 generateParkingSpaces(lot);
             });
@@ -551,28 +497,24 @@
             const stepLat = lot.height / gridSize;
 
             const spacesData = [];
+            const occupiedIndices = Array.from({ length: lot.spaces }, (_, i) => i)
+                .sort(() => Math.random() - 0.5) // Shuffle indices
+                .slice(0, lot.occupied);
+
             for (let i = 0; i < lot.spaces; i++) {
                 const row = Math.floor(i / gridSize);
                 const col = i % gridSize;
                 const pos = [
-                    lng - lot.width / 2 + stepLng * (col + 0.5) + (Math.random() - 0.5) * stepLng * 0.2,
-                    lat - lot.height / 2 + stepLat * (row + 0.5) + (Math.random() - 0.5) * stepLat * 0.2
+                    lng - lot.width / 2 + stepLng * (col + 0.5) + (Math.random() - 0.5) * stepLng * 0.8,
+                    lat - lot.height / 2 + stepLat * (row + 0.5) + (Math.random() - 0.5) * stepLat * 0.8
                 ];
-                const occupied = i < lot.occupied;
+                const occupied = occupiedIndices.includes(i);
                 const spaceId = `${lot.id}-${i + 1}`;
-                const marker = isFallback ?
-                    L.circleMarker([pos[1], pos[0]], {
-                        radius: 6,
-                        color: occupied ? '#ff6f61' : '#4caf50',
-                        fillOpacity: 0.8
-                    }).addTo(map).setStyle({ visibility: 'hidden' }) :
-                    new AMap.Marker({
-                        position: pos,
-                        map: map,
-                        content: `<div style="width: 12px; height: 12px; border-radius: 50%; background: ${occupied ? '#ff6f61' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
-                        offset: new AMap.Pixel(-6, -6),
-                        visible: false
-                    });
+                const marker = L.circleMarker([pos[1], pos[0]], {
+                    radius: 6,
+                    color: occupied ? '#ff6f61' : '#4caf50',
+                    fillOpacity: 0.8
+                }).addTo(map).setStyle({ visibility: 'hidden' });
                 marker.on('click', () => showSpaceInfo(lot, spaceId, occupied, pos));
                 spacesData.push({ id: spaceId, position: pos, occupied, marker });
             }
@@ -581,17 +523,17 @@
 
         function updateParkingSpaces(lot) {
             if (!lot.spacesData.length) return;
-            const bounds = isFallback ? map.getBounds() : map.getBounds();
+            const bounds = map.getBounds();
             const occupiedCount = lot.occupied;
+            const occupiedIndices = Array.from({ length: lot.spaces }, (_, i) => i)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, occupiedCount);
+
             lot.spacesData.forEach((space, index) => {
-                const shouldBeOccupied = index < occupiedCount;
-                if (space.occupied !== shouldBeOccupied && (isFallback ? bounds.contains([space.position[1], space.position[0]]) : bounds.contains(space.position))) {
+                const shouldBeOccupied = occupiedIndices.includes(index);
+                if (space.occupied !== shouldBeOccupied && bounds.contains([space.position[1], space.position[0]])) {
                     space.occupied = shouldBeOccupied;
-                    if (isFallback) {
-                        space.marker.setStyle({ color: shouldBeOccupied ? '#ff6f61' : '#4caf50' });
-                    } else {
-                        space.marker.setContent(`<div style="width: 12px; height: 12px; border-radius: 50%; background: ${shouldBeOccupied ? '#ff6f61' : '#4caf50'}; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`);
-                    }
+                    space.marker.setStyle({ color: shouldBeOccupied ? '#ff6f61' : '#4caf50' });
                 }
             });
         }
@@ -599,63 +541,40 @@
         function selectParking(lot) {
             selectedParking = lot;
             showParkingInfo(lot);
-            isFallback ? map.setView([lot.lnglat[1], lot.lnglat[0]], 18) : map.setCenter(lot.lnglat);
-            !isFallback && map.setZoom(18);
+            map.setView([lot.lnglat[1], lot.lnglat[0]], 18);
             parkingLots.forEach(l => {
                 const visible = l === lot;
-                l.spacesData.forEach(space => isFallback ? space.marker.setStyle({ visibility: visible ? 'visible' : 'hidden' }) : space.marker.setVisible(visible));
+                l.spacesData.forEach(space => space.marker.setStyle({ visibility: visible ? 'visible' : 'hidden' }));
             });
             logger.info(`选择了停车场: ${lot.name}`);
         }
 
         function showParkingInfo(lot) {
             const t = translations[currentLang];
-            if (isFallback) {
-                markers[parkingLots.indexOf(lot)].openPopup();
-            } else {
-                const infoWindow = new AMap.InfoWindow({
-                    content: `
-                        <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #4fc3f7; margin-bottom: 8px;">${lot.name}</h4>
-                            <p>${t.available}: ${lot.spaces - lot.occupied}</p>
-                            <p>总车位: ${lot.spaces}</p>
-                            <p>评分: ${lot.rating}/5</p>
-                            <p>经纬度: ${lot.lnglat.join(', ')}</p>
-                            ${userPosition ? `<p>距离: ${calculateDistance(userPosition, lot.lnglat).toFixed(2)} 公里</p>` : ''}
-                        </div>
-                    `,
-                    offset: new AMap.Pixel(0, -30)
-                });
-                infoWindow.open(map, lot.lnglat);
-            }
+            const marker = markers[parkingLots.indexOf(lot)];
+            marker.bindPopup(`
+                <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h4 style="color: #4fc3f7; margin-bottom: 8px;">${lot.name}</h4>
+                    <p>${t.available}: ${lot.spaces - lot.occupied}</p>
+                    <p>总车位: ${lot.spaces}</p>
+                    <p>评分: ${lot.rating}/5</p>
+                    <p>经纬度: ${lot.lnglat.join(', ')}</p>
+                    ${userPosition ? `<p>距离: ${calculateDistance(userPosition, lot.lnglat).toFixed(2)} 公里</p>` : ''}
+                </div>
+            `).openPopup();
         }
 
         function showSpaceInfo(lot, spaceId, occupied, position) {
             const t = translations[currentLang];
-            if (isFallback) {
-                const marker = lot.spacesData.find(s => s.id === spaceId).marker;
-                marker.bindPopup(`
-                    <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h4 style="color: #4fc3f7; margin-bottom: 8px;">${t.spaceInfo}</h4>
-                        <p>${t.spaceId}: ${spaceId}</p>
-                        <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
-                        <p>位置: ${position.join(', ')}</p>
-                    </div>
-                `).openPopup();
-            } else {
-                const infoWindow = new AMap.InfoWindow({
-                    content: `
-                        <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                            <h4 style="color: #4fc3f7; margin-bottom: 8px;">${t.spaceInfo}</h4>
-                            <p>${t.spaceId}: ${spaceId}</p>
-                            <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
-                            <p>位置: ${position.join(', ')}</p>
-                        </div>
-                    `,
-                    offset: new AMap.Pixel(0, -20)
-                });
-                infoWindow.open(map, position);
-            }
+            const marker = lot.spacesData.find(s => s.id === spaceId).marker;
+            marker.bindPopup(`
+                <div style="padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h4 style="color: #4fc3f7; margin-bottom: 8px;">${t.spaceInfo}</h4>
+                    <p>${t.spaceId}: ${spaceId}</p>
+                    <p>${t.status}: ${occupied ? t.occupied : t.free}</p>
+                    <p>位置: ${position.join(', ')}</p>
+                </div>
+            `).openPopup();
         }
 
         function initDistricts() {
@@ -666,153 +585,32 @@
                 domCache.districtSelect.appendChild(option);
             });
 
-            domCache.districtSelect.addEventListener('change', async (e) => {
+            domCache.districtSelect.addEventListener('change', (e) => {
                 const adcode = e.target.value;
                 if (adcode === '中国') {
-                    isFallback ? map.setView([30.593099, 114.305392], 12) : map.setZoomAndCenter(12, [114.305392, 30.593099]);
-                    clearDistrict();
-                    resetDistrictOptions();
+                    map.setView([30.593, 114.305], 12);
                     return;
                 }
-
-                if (!isFallback) {
-                    try {
-                        await loadPlugins(['AMap.DistrictSearch']);
-                        const district = new AMap.DistrictSearch({
-                            level: adcode.length === 2 ? 'province' : 'city',
-                            subdistrict: 0
-                        });
-                        district.search(adcode, (status, result) => {
-                            if (status === 'complete' && result.districtList?.length > 0) {
-                                const districtData = result.districtList[0];
-                                clearDistrict();
-                                drawDistrict(districtData);
-                                updateDistrictOptions(adcode);
-                            }
-                        });
-                    } catch (e) {
-                        logger.error('行政区划加载失败:', e);
-                    }
-                }
+                map.setView([30.593, 114.305], 14); // Simplified for demo
             });
-        }
-
-        function resetDistrictOptions() {
-            domCache.districtSelect.innerHTML = `<option value="中国">${translations[currentLang].nationwide}</option>`;
-            Object.keys(provinces).forEach(code => {
-                const opt = document.createElement('option');
-                opt.value = code;
-                opt.textContent = provinces[code].name;
-                domCache.districtSelect.appendChild(opt);
-            });
-        }
-
-        function updateDistrictOptions(adcode) {
-            domCache.districtSelect.innerHTML = `<option value="中国">${translations[currentLang].nationwide}</option>`;
-            const cities = provinces[adcode].cities || {};
-            Object.keys(cities).forEach(cityCode => {
-                const opt = document.createElement('option');
-                opt.value = cityCode;
-                opt.textContent = cities[cityCode];
-                domCache.districtSelect.appendChild(opt);
-            });
-        }
-
-        function drawDistrict(districtData) {
-            const bounds = districtData.boundaries;
-            const polygons = [];
-            if (bounds) {
-                bounds.forEach(bound => {
-                    const polygon = new AMap.Polygon({
-                        path: bound,
-                        fillColor: '#b2ebf2',
-                        fillOpacity: 0.3,
-                        strokeColor: '#4fc3f7',
-                        strokeWeight: 2
-                    });
-                    polygons.push(polygon);
-                    map.add(polygon);
-                });
-                map.setFitView(polygons);
-            } else {
-                map.setCenter(districtData.center);
-                map.setZoom(12);
-            }
-        }
-
-        function clearDistrict() {
-            if (!isFallback) {
-                map.getAllOverlays('polygon').forEach(polygon => {
-                    if (!parkingAreas.includes(polygon)) map.remove(polygon);
-                });
-            }
         }
 
         function initCitySearch() {
-            domCache.citySearch.addEventListener('input', debounce(async (e) => {
+            domCache.citySearch.addEventListener('input', debounce((e) => {
                 const value = e.target.value.trim();
                 if (!value || value.length < 2) return;
-
-                if (!isFallback) {
-                    try {
-                        await loadPlugins(['AMap.AutoComplete']);
-                        const autoComplete = new AMap.AutoComplete({ city: '武汉市' });
-                        autoComplete.search(value, (status, result) => {
-                            if (status === 'complete' && result.tips?.length > 0) {
-                                const tip = result.tips[0];
-                                map.setCenter(tip.location);
-                                map.setZoom(14);
-                                clearDistrict();
-                            }
-                        });
-                    } catch (e) {
-                        logger.error('城市搜索加载失败:', e);
-                    }
-                } else {
-                    map.setView([30.593099, 114.305392], 14);
-                }
+                map.setView([30.593, 114.305], 14); // Simplified for demo
             }, 300));
         }
 
-        async function initGeolocation() {
-            if (!isFallback) {
-                try {
-                    await loadPlugins(['AMap.Geolocation']);
-                    const geolocation = new AMap.Geolocation({
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        buttonOffset: new AMap.Pixel(10, 20),
-                        zoomToAccuracy: true
-                    });
-                    map.addControl(geolocation);
-                    geolocation.getCurrentPosition((status, result) => {
-                        if (status === 'complete') {
-                            userPosition = result.position;
-                            new AMap.Marker({
-                                position: userPosition,
-                                map: map,
-                                icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_bs.png',
-                                title: '您的位置'
-                            });
-                            map.setCenter(userPosition);
-                            map.setZoom(15);
-                            updateParkingUI();
-                        } else {
-                            logger.error('定位失败:', result.message);
-                        }
-                    });
-                } catch (e) {
-                    logger.error('定位加载失败:', e);
-                }
-            } else {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((pos) => {
-                        userPosition = [pos.coords.longitude, pos.coords.latitude];
-                        L.marker(userPosition).addTo(map).bindPopup('您的位置').openPopup();
-                        map.setView(userPosition, 15);
-                        updateParkingUI();
-                    }, (err) => logger.error('浏览器定位失败:', err.message));
-                }
+        function initGeolocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userPosition = [pos.coords.latitude, pos.coords.longitude];
+                    L.marker(userPosition).addTo(map).bindPopup('您的位置').openPopup();
+                    map.setView(userPosition, 15);
+                    updateParkingUI();
+                }, (err) => logger.error('浏览器定位失败:', err.message));
             }
         }
 
@@ -844,8 +642,7 @@
 
             markers.forEach((marker, index) => {
                 const lot = parkingLots[index];
-                isFallback ? marker.setPopupContent(`${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`) : 
-                             marker.setLabel({ content: `${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})` });
+                marker.setPopupContent(`${lot.name} (${lot.spaces - lot.occupied}/${lot.spaces})`);
             });
             updateParkingSelectOptions();
         }
@@ -856,7 +653,7 @@
                 lot.occupied = Math.max(0, Math.min(lot.spaces, lot.occupied + change));
                 updateParkingSpaces(lot);
                 if (lot === selectedParking) {
-                    lot.spacesData.forEach(space => isFallback ? space.marker.setStyle({ visibility: 'visible' }) : space.marker.setVisible(true));
+                    lot.spacesData.forEach(space => space.marker.setStyle({ visibility: 'visible' }));
                     showParkingInfo(lot);
                 }
             });
@@ -870,23 +667,19 @@
             updateLanguage('zh-CN');
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initMap();
-            if (map) {
-                initParkingLots();
-                initDistricts();
-                initCitySearch();
-                await initGeolocation();
-                initLanguage();
-                updateParkingUI();
-                setInterval(updateParkingStatus, 5000);
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            initParkingLots();
+            initDistricts();
+            initCitySearch();
+            initGeolocation();
+            initLanguage();
+            updateParkingUI();
+            setInterval(updateParkingStatus, 5000);
 
-                document.querySelector('.stacked-btn').addEventListener('click', (e) => {
-                    e.target.parentElement.classList.toggle('active');
-                });
-            } else {
-                logger.error('地图未初始化，后续功能无法执行');
-            }
+            document.querySelector('.stacked-btn').addEventListener('click', (e) => {
+                e.target.parentElement.classList.toggle('active');
+            });
         });
     </script>
 </body>
